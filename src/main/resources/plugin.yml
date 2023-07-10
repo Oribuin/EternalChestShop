@@ -4,3 +4,7 @@ version: '@version@'
 api-version: '1.16'
 author: Oribuin
 description: A plugin that does stuff
+depend:
+  - Vault
+softdepend:
+  - PlaceholderAPI

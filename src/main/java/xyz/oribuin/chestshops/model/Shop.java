@@ -187,6 +187,19 @@ public class Shop {
         // TODO: Update the sign
     }
 
+    public void remove() {
+        if (!(this.location.getBlock().getState() instanceof Container container))
+            return;
+
+        PersistentDataContainer data = container.getPersistentDataContainer();
+        data.remove(ShopDataKeys.SHOP_OWNER);
+        data.remove(ShopDataKeys.SHOP_TYPE);
+        data.remove(ShopDataKeys.SHOP_ITEM);
+        data.remove(ShopDataKeys.SHOP_PRICE);
+        data.remove(ShopDataKeys.SHOP_OWNER_NAME);
+        container.update();
+    }
+
     /**
      * Get the amount of items that can be bought from the shop
      *

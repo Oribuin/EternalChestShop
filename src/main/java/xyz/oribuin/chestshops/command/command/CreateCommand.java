@@ -42,18 +42,6 @@ public class CreateCommand extends RoseCommand {
 
         Shop shop = new Shop(player.getUniqueId(), container.getLocation(), item, price);
 
-        // Add random number of stacks to the shop
-        List<ItemStack> stacks = new ArrayList<>();
-        int totalStacks = Math.max(1, (int) (Math.random() * 5));
-        for (int i = 0; i < totalStacks; i++) {
-            ItemStack stack = item.clone();
-            stack.setAmount((int) (Math.random() * 64));
-
-            stacks.add(item);
-        }
-
-        container.getInventory().addItem(stacks.toArray(new ItemStack[0]));
-
         if (shop.create(player)) {
             List<String> message = List.of(
                     "You have successfully created a shop.",

@@ -23,6 +23,9 @@ public class VaultProvider {
     }
 
     public static VaultProvider getInstance() {
+        if (instance == null)
+            instance = new VaultProvider();
+
         return instance;
     }
 
