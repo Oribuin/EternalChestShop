@@ -78,6 +78,12 @@ public class BlockListeners implements Listener {
 
             case RIGHT_CLICK_BLOCK -> {
                 // TODO: Show stats of the shop
+
+                // Owner should be able to open the shop
+                if (event.getPlayer().getUniqueId().equals(shop.getOwner()) && !event.getPlayer().isSneaking()) {
+                    event.setCancelled(false);
+                    return;
+                }
                 event.getPlayer().chat("/cshops stats");
             }
         }
