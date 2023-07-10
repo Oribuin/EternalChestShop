@@ -1,6 +1,7 @@
 package xyz.oribuin.chestshops.listener;
 
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
@@ -111,9 +112,13 @@ public class BlockListeners implements Listener {
             return;
         }
 
-        if (shop.buy(event.getPlayer(), amount) == PurchaseResult.SUCCESS) {
-            event.getPlayer().sendMessage(Component.text("You bought " + amount + " items from the shop!"));
-        }
+        // Has to be done synchronously :( Bukkit API moment
+        Bukkit.getScheduler().runTask(this.plugin, () -> {
+            if (shop.buy(event.getPlayer(), amount) == PurchaseResult.SUCCESS) {
+                event.getPlayer().sendMessage(Component.text("You bought " + amount + " items from the shop!"));
+            }
+        });
+
 
     }
 
