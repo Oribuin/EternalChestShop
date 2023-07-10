@@ -1,4 +1,4 @@
-package dev.rosewood.myplugin.command;
+package xyz.oribuin.chestshops.command;
 
 import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.rosegarden.command.framework.RoseCommandWrapper;
@@ -13,17 +13,17 @@ public class ExampleCommandWrapper extends RoseCommandWrapper {
 
     @Override
     public String getDefaultName() {
-        return "example";
+        return "cshops";
     }
 
     @Override
     public List<String> getDefaultAliases() {
-        return List.of("ex");
+        return List.of("echestshops", "chestshops");
     }
 
     @Override
     public List<String> getCommandPackages() {
-        return List.of("dev.rosewood.myplugin.command.command");
+        return List.of("xyz.oribuin.chestshops.command.command");
     }
 
     @Override

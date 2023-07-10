@@ -1,6 +1,6 @@
-package dev.rosewood.myplugin.manager;
+package xyz.oribuin.chestshops.manager;
 
-import dev.rosewood.myplugin.command.ExampleCommandWrapper;
+import xyz.oribuin.chestshops.command.ExampleCommandWrapper;
 import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.rosegarden.command.framework.RoseCommandWrapper;
 import dev.rosewood.rosegarden.manager.AbstractCommandManager;
@@ -20,7 +20,7 @@ public class CommandManager extends AbstractCommandManager {
 
     @Override
     public List<String> getArgumentHandlerPackages() {
-        return List.of("dev.rosewood.myplugin.command.argument");
+        return List.of("xyz.oribuin.chestshops.command.argument");
     }
 
 }

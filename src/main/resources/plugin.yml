@@ -1,6 +1,6 @@
-name: MyPlugin
-main: dev.rosewood.myplugin.MyPlugin
+name: EternalChestShop
+main: xyz.oribuin.chestshops.EternalChestShops
 version: '@version@'
 api-version: '1.16'
-author: Rosewood-Development
+author: Oribuin
 description: A plugin that does stuff
