@@ -10,6 +10,15 @@ import java.util.List;
 
 public class ConfigurationManager extends AbstractConfigurationManager {
 
+    public ConfigurationManager(RosePlugin rosePlugin) {
+        super(rosePlugin, Setting.class);
+    }
+
+    @Override
+    protected String[] getHeader() {
+        return new String[]{};
+    }
+
     public enum Setting implements RoseSetting {
 
         SIGN_TEXT_SETTINGS("sign-text-settings", null, "Modify the text for the signs here."),
@@ -66,14 +75,5 @@ public class ConfigurationManager extends AbstractConfigurationManager {
         public CommentedFileConfiguration getBaseConfig() {
             return EternalChestShops.getInstance().getManager(ConfigurationManager.class).getConfig();
         }
-    }
-
-    public ConfigurationManager(RosePlugin rosePlugin) {
-        super(rosePlugin, Setting.class);
-    }
-
-    @Override
-    protected String[] getHeader() {
-        return new String[]{};
     }
 }

@@ -13,8 +13,6 @@ import xyz.oribuin.chestshops.manager.LocaleManager;
 import xyz.oribuin.chestshops.manager.ShopManager;
 import xyz.oribuin.chestshops.model.Shop;
 
-import java.util.List;
-
 public class BuyCommand extends RoseCommand {
 
     public BuyCommand(RosePlugin rosePlugin, RoseCommandWrapper parent) {

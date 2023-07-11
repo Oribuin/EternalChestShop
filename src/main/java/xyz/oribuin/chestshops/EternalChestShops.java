@@ -3,7 +3,6 @@ package xyz.oribuin.chestshops;
 import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.rosegarden.manager.Manager;
 import org.bukkit.plugin.PluginManager;
-import xyz.oribuin.chestshops.hook.VaultProvider;
 import xyz.oribuin.chestshops.listener.BlockListeners;
 import xyz.oribuin.chestshops.manager.CommandManager;
 import xyz.oribuin.chestshops.manager.ConfigurationManager;
@@ -16,14 +15,14 @@ public class EternalChestShops extends RosePlugin {
 
     private static EternalChestShops instance;
 
-    public static EternalChestShops getInstance() {
-        return instance;
-    }
-
     public EternalChestShops() {
         super(-1, -1, ConfigurationManager.class, null, LocaleManager.class, CommandManager.class);
 
         instance = this;
+    }
+
+    public static EternalChestShops getInstance() {
+        return instance;
     }
 
     @Override

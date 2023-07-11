@@ -1,9 +1,9 @@
 package xyz.oribuin.chestshops.manager;
 
-import xyz.oribuin.chestshops.command.ExampleCommandWrapper;
 import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.rosegarden.command.framework.RoseCommandWrapper;
 import dev.rosewood.rosegarden.manager.AbstractCommandManager;
+import xyz.oribuin.chestshops.command.ExampleCommandWrapper;
 
 import java.util.List;
 

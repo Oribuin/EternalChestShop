@@ -62,7 +62,6 @@ public class VaultProvider {
     }
 
 
-
     /**
      * Get the balance of a player
      *
