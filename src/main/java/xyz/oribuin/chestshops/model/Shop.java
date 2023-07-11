@@ -9,11 +9,9 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Container;
 import org.bukkit.block.Sign;
-import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.WallSign;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.material.Attachable;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
@@ -82,23 +80,22 @@ public class Shop {
         provider.take(who, totalCost);
         provider.give(this.offlineOwner, totalCost);
 
-        // Split the items into stacks of 64
+        // Take each item in individual stacks and add them to the player's inventory
         int totalStacks = (int) Math.ceil(totalItems / 64D);
         List<ItemStack> stacks = new ArrayList<>();
 
         for (int i = 0; i < totalStacks; i++) {
-            int stackSize = Math.min(totalItems, 64);
+            int size = Math.min(totalItems, 64);
             ItemStack stack = this.item.clone();
-            stack.setAmount(stackSize);
+            stack.setAmount(size);
             stacks.add(stack);
-            totalItems -= stackSize;
+            totalItems -= size;
         }
 
         // Add the items to the player's inventory and remove them from the shop
-        for (ItemStack stack : stacks) {
-            who.getInventory().addItem(stack);
-            container.getInventory().removeItem(stack);
-        }
+        ItemStack[] toTransfer = stacks.toArray(new ItemStack[0]);
+        who.getInventory().addItem(toTransfer);
+        container.getInventory().removeItem(toTransfer);
 
         // Update the shop data
         this.update();
@@ -133,23 +130,23 @@ public class Shop {
         provider.take(this.offlineOwner, totalCost);
         provider.give(who, totalCost);
 
-        // Split the items into stacks of 64
+        // Take each item in individual stacks and add them to the player's inventory
         int totalStacks = (int) Math.ceil(itemsToSell / 64D);
         List<ItemStack> stacks = new ArrayList<>();
 
         for (int i = 0; i < totalStacks; i++) {
-            int stackSize = Math.min(itemsToSell, 64);
+            int size = Math.min(itemsToSell, 64);
             ItemStack stack = this.item.clone();
-            stack.setAmount(stackSize);
+            stack.setAmount(size);
             stacks.add(stack);
-            itemsToSell -= stackSize;
+            itemsToSell -= size;
         }
 
         // Add the items to the player's inventory and remove them from the shop
-        for (ItemStack stack : stacks) {
-            container.getInventory().addItem(stack);
-            who.getInventory().removeItem(stack);
-        }
+        ItemStack[] toTransfer = stacks.toArray(new ItemStack[0]);
+        who.getInventory().removeItem(toTransfer);
+        container.getInventory().addItem(toTransfer);
+
 
         // Update the shop data
         this.update();
@@ -167,11 +164,6 @@ public class Shop {
             return false;
 
         // get player direction as block face
-//        BlockFace face = ShopUtils.getEmptyFace(container.getBlock(), this.location.getBlock().getBlockData() instanceof Chest chest
-//                ? chest.getFacing()
-//                : BlockFace.NORTH
-//        );
-
         BlockFace face = ShopUtils.getEmptyFace(container.getBlock(), who.getFacing().getOppositeFace());
         if (face == BlockFace.SELF)
             return false;
