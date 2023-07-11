@@ -14,16 +14,16 @@ public class ConfigurationManager extends AbstractConfigurationManager {
 
         SIGN_TEXT_SETTINGS("sign-text-settings", null, "Modify the text for the signs here."),
         SIGN_TEXT_SETTINGS_BUYING("sign-text-settings.buying", List.of(
-                "%owner%",
+                "&f%owner%",
+                "&f%item%",
                 "&#00B4DB&lBuying: &f%space%",
-                "%item%",
                 "&f$#00B4DB&l%price% &fEach"
         ), "The text for the buying sign."),
         SIGN_TEXT_SETTINGS_SELLING("sign-text-settings.selling", List.of(
-                "%owner%",
+                "&f%owner%",
+                "&f%item%",
                 "&#00B4DB&lSelling: &f%space%",
-                "%item%",
-                "&f$#00B4DB&l%price% &fEach"
+                "&f$#00B4DB&l%stock% &fEach"
         ), "The text for the selling sign.");
 
         private final String key;

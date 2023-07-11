@@ -265,8 +265,7 @@ public final class ShopUtils {
         List<BlockFace> allowed = List.of(BlockFace.NORTH,
                 BlockFace.EAST,
                 BlockFace.SOUTH,
-                BlockFace.WEST,
-                BlockFace.UP
+                BlockFace.WEST
         );
 
         for (BlockFace face : allowed) {

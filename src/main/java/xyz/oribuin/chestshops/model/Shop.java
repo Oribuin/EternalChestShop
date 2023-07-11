@@ -3,15 +3,24 @@ package xyz.oribuin.chestshops.model;
 import dev.rosewood.rosegarden.utils.StringPlaceholders;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Container;
+import org.bukkit.block.Sign;
+import org.bukkit.block.data.type.Chest;
+import org.bukkit.block.data.type.WallSign;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.Attachable;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
+import xyz.oribuin.chestshops.EternalChestShops;
 import xyz.oribuin.chestshops.hook.VaultProvider;
+import xyz.oribuin.chestshops.manager.ConfigurationManager.Setting;
+import xyz.oribuin.chestshops.manager.LocaleManager;
 import xyz.oribuin.chestshops.model.result.PurchaseResult;
 import xyz.oribuin.chestshops.model.result.SellResult;
 import xyz.oribuin.chestshops.util.ShopUtils;
@@ -20,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class Shop {
 
@@ -157,11 +167,29 @@ public class Shop {
             return false;
 
         // get player direction as block face
+//        BlockFace face = ShopUtils.getEmptyFace(container.getBlock(), this.location.getBlock().getBlockData() instanceof Chest chest
+//                ? chest.getFacing()
+//                : BlockFace.NORTH
+//        );
+
         BlockFace face = ShopUtils.getEmptyFace(container.getBlock(), who.getFacing().getOppositeFace());
         if (face == BlockFace.SELF)
             return false;
 
-        // TODO: Create the sign for the shop
+        Block signBlock = this.location.getBlock().getRelative(face);
+        signBlock.setType(Material.OAK_WALL_SIGN); // TODO: Add support for other sign types
+        Sign sign = (Sign) signBlock.getState();
+
+        if (signBlock.getBlockData() instanceof WallSign attachable) {
+            attachable.setFacing(face);
+            sign.setBlockData(attachable);
+        }
+
+        PersistentDataContainer signContainer = sign.getPersistentDataContainer();
+        signContainer.set(ShopDataKeys.SHOP_OWNER, PersistentDataType.STRING, this.owner.toString());
+        signContainer.set(ShopDataKeys.SHOP_SIGN, PersistentDataType.INTEGER, 1);
+        sign.setWaxed(true);
+        sign.update();
 
         // Update the shop data
         this.update();
@@ -171,6 +199,7 @@ public class Shop {
     /**
      * Update the shop data in the container
      */
+    @SuppressWarnings("deprecation")
     public void update() {
         if (!(this.location.getBlock().getState() instanceof Container container))
             return;
@@ -184,7 +213,46 @@ public class Shop {
 
         container.update();
 
-        // TODO: Update the sign
+        // Get connecting sign and update it
+        List<BlockFace> allowed = List.of(BlockFace.NORTH,
+                BlockFace.EAST,
+                BlockFace.SOUTH,
+                BlockFace.WEST,
+                BlockFace.UP
+        );
+
+        // TODO: Improve system for finding attached signs, this seems kinda scuffed
+        Sign attachedSign = allowed.stream()
+                .map(f -> this.location.getBlock().getRelative(f))
+                .filter(b ->
+                        b.getState() instanceof Sign sign
+                                && sign.getPersistentDataContainer().has(ShopDataKeys.SHOP_SIGN, PersistentDataType.INTEGER)
+                                && sign.getPersistentDataContainer().has(ShopDataKeys.SHOP_OWNER, PersistentDataType.STRING)
+                                && Objects.equals(sign.getPersistentDataContainer().get(ShopDataKeys.SHOP_OWNER, PersistentDataType.STRING), this.owner.toString())
+                )
+                .map(b -> (Sign) b.getState())
+                .findFirst()
+                .orElse(null);
+
+        if (attachedSign == null) {
+            System.out.println("Could not find attached sign to shop at " + this.location.toString());
+            return;
+        }
+
+        List<String> lines = new ArrayList<>(this.type == ShopType.SELLING
+                ? Setting.SIGN_TEXT_SETTINGS_SELLING.getStringList()
+                : Setting.SIGN_TEXT_SETTINGS_BUYING.getStringList()
+        );
+
+        LocaleManager locale = EternalChestShops.getInstance().getManager(LocaleManager.class);
+        lines = lines.stream()
+                .map(s -> locale.format(null, s, this.getPlaceholders()))
+                .collect(Collectors.toList());
+
+        for (int i = 0; i < lines.size(); i++)
+            attachedSign.setLine(i, lines.get(i));
+
+        attachedSign.update();
     }
 
     public void remove() {
@@ -198,6 +266,30 @@ public class Shop {
         data.remove(ShopDataKeys.SHOP_PRICE);
         data.remove(ShopDataKeys.SHOP_OWNER_NAME);
         container.update();
+
+        // Remove the sign attached to the shop
+        List<BlockFace> allowed = List.of(BlockFace.NORTH,
+                BlockFace.EAST,
+                BlockFace.SOUTH,
+                BlockFace.WEST,
+                BlockFace.UP
+        );
+
+        Sign attachedSign = allowed.stream()
+                .map(f -> this.location.getBlock().getRelative(f))
+                .filter(b ->
+                        b.getState() instanceof Sign sign
+                                && sign.getPersistentDataContainer().has(ShopDataKeys.SHOP_SIGN, PersistentDataType.INTEGER)
+                                && sign.getPersistentDataContainer().has(ShopDataKeys.SHOP_OWNER, PersistentDataType.STRING)
+                                && Objects.equals(sign.getPersistentDataContainer().get(ShopDataKeys.SHOP_OWNER, PersistentDataType.STRING), this.owner.toString())
+                )
+                .map(b -> (Sign) b.getState())
+                .findFirst()
+                .orElse(null);
+
+        if (attachedSign == null) return;
+
+        attachedSign.getBlock().setType(Material.AIR);
     }
 
     /**

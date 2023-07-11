@@ -48,13 +48,15 @@ public class ShopManager extends Manager {
             container = casted;
 
         // Check if the block is attached to a container
-        if (block.getState() instanceof Attachable attachable) {
+        if (block.getState() instanceof Attachable attachable && container == null) {
             Block relative = block.getRelative(attachable.getAttachedFace());
             if (relative.getState() instanceof Container casted)
                 container = casted;
         }
 
-        if (container == null) return null;
+        if (container == null)
+            return null;
+
         return this.getShop(container);
     }
 
@@ -83,6 +85,8 @@ public class ShopManager extends Manager {
 
         return shop;
     }
+
+    // TODO: Get shop via sign.
 
     /**
      * Check if a block is a shop

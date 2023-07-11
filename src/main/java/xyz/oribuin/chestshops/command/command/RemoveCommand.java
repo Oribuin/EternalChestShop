@@ -13,53 +13,46 @@ import xyz.oribuin.chestshops.manager.LocaleManager;
 import xyz.oribuin.chestshops.manager.ShopManager;
 import xyz.oribuin.chestshops.model.Shop;
 
-import java.util.List;
+public class RemoveCommand extends RoseCommand {
 
-public class BuyCommand extends RoseCommand {
-
-    public BuyCommand(RosePlugin rosePlugin, RoseCommandWrapper parent) {
+    public RemoveCommand(RosePlugin rosePlugin, RoseCommandWrapper parent) {
         super(rosePlugin, parent);
     }
 
     @RoseExecutable
-    public void execute(CommandContext context, int amount) {
+    public void execute(CommandContext context) {
         if (!(context.getSender() instanceof Player player))
             return;
 
         Block target = player.getTargetBlockExact(5);
         if (target == null || !(target.getState() instanceof Container container)) {
-            this.rosePlugin.getManager(LocaleManager.class).sendMessage(player, "command-buy-invalid-block");
+            this.rosePlugin.getManager(LocaleManager.class).sendMessage(player, "command-remove-invalid-block");
             return;
         }
 
-        if (amount < 1) {
-            this.rosePlugin.getManager(LocaleManager.class).sendMessage(player, "command-buy-invalid-amount");
-            return;
-        }
+        // TODO: Implement bypass system
 
         Shop shop = this.rosePlugin.getManager(ShopManager.class).getShop(container);
 
         if (shop != null) {
-
-            shop.buy(player, amount);
-            player.sendMessage(Component.text("You bought " + amount + " items from the shop!"));
+            shop.remove();
         }
 
     }
 
     @Override
     protected String getDefaultName() {
-        return "buy";
+        return "remove";
     }
 
     @Override
     public String getDescriptionKey() {
-        return "command-buy-description";
+        return "command-remove-description";
     }
 
     @Override
     public String getRequiredPermission() {
-        return "eternalchestshops.buy";
+        return "eternalchestshops.remove";
     }
 
     @Override

@@ -50,4 +50,23 @@ public class LocaleManager extends AbstractLocaleManager {
         }
     }
 
+    /**
+     * Format a string with placeholders
+     *
+     * @param sender       The CommandSender to send the message to
+     * @param message      The message to send
+     * @param placeholders The placeholders to apply to the message
+     * @return The formatted string
+     */
+    public String format(CommandSender sender, String message, StringPlaceholders placeholders) {
+        if (message.isEmpty())
+            return "";
+
+        if (placeholders == null)
+            placeholders = StringPlaceholders.empty();
+
+        return HexUtils.colorify(this.parsePlaceholders(sender, placeholders.apply(message)));
+    }
+
+
 }
