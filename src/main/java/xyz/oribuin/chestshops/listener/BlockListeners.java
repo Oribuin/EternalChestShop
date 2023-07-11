@@ -70,15 +70,17 @@ public class BlockListeners implements Listener {
     public void onBuy(PlayerInteractEvent event) {
         Block block = event.getClickedBlock();
         if (!(block.getState() instanceof Container container)) return;
-        if (event.getAction() != Action.LEFT_CLICK_BLOCK || block == null) return;
+        if (block == null) return;
 
         ShopManager manager = this.plugin.getManager(ShopManager.class);
         Shop shop = manager.getShop(container);
         if (shop == null) return;
 
-        event.setCancelled(true);
+        // Update the shop
+        shop.update();
 
-        shop.update(); // Update the shop
+        if (event.getAction() != Action.LEFT_CLICK_BLOCK) return;
+        event.setCancelled(true);
 
         // TODO: Switch to locale
 
@@ -132,11 +134,11 @@ public class BlockListeners implements Listener {
         // Has to be done synchronously :( Bukkit API moment
         Bukkit.getScheduler().runTask(this.plugin, () -> {
             if (shop.getType() == ShopType.SELLING && shop.buy(event.getPlayer(), amount) == PurchaseResult.SUCCESS) {
-                event.getPlayer().sendMessage(Component.text("You sold " + amount + " items to the shop!"));
+                event.getPlayer().sendMessage(Component.text("You bought " + amount + " items to the shop!"));
             }
 
             if (shop.getType() == ShopType.BUYING && shop.sell(event.getPlayer(), amount) == SellResult.SUCCESS) {
-                event.getPlayer().sendMessage(Component.text("You bought " + amount + " items from the shop!"));
+                event.getPlayer().sendMessage(Component.text("You selling " + amount + " items from the shop!"));
             }
         });
 

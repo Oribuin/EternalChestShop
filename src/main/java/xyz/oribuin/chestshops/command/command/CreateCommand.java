@@ -12,7 +12,6 @@ import org.bukkit.inventory.ItemStack;
 import xyz.oribuin.chestshops.manager.LocaleManager;
 import xyz.oribuin.chestshops.model.Shop;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class CreateCommand extends RoseCommand {

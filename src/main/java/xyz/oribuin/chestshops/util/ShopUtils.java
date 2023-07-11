@@ -337,8 +337,9 @@ public final class ShopUtils {
     public static int getAmountOfItem(Inventory inventory, ItemStack item) {
         int total = 0;
         for (ItemStack stack : inventory.getContents()) {
-            if (stack == null || stack.getType() == Material.AIR)
+            if (stack == null || stack.getType() == Material.AIR) {
                 continue;
+            }
 
             if (stack.isSimilar(item))
                 total += stack.getAmount();

@@ -40,7 +40,6 @@ public class BuyCommand extends RoseCommand {
         Shop shop = this.rosePlugin.getManager(ShopManager.class).getShop(container);
 
         if (shop != null) {
-
             shop.buy(player, amount);
             player.sendMessage(Component.text("You bought " + amount + " items from the shop!"));
         }

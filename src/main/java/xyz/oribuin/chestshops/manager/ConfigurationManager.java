@@ -22,7 +22,7 @@ public class ConfigurationManager extends AbstractConfigurationManager {
         SIGN_TEXT_SETTINGS_SELLING("sign-text-settings.selling", List.of(
                 "&f%owner%",
                 "&f%item%",
-                "&#00B4DB&lSelling: &f%space%",
+                "&#00B4DB&lSelling: &f%stock%",
                 "&f$#00B4DB&l%stock% &fEach"
         ), "The text for the selling sign.");
 
