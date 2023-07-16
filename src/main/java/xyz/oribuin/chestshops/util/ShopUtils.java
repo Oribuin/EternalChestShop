@@ -43,8 +43,6 @@ public final class ShopUtils {
     public static Location center(Location location) {
         final Location loc = location.getBlock().getLocation().clone();
         loc.add(0.5, 0.5, 0.5);
-        loc.setYaw(180f);
-        loc.setPitch(0f);
         return loc;
     }
 

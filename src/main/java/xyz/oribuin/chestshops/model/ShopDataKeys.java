@@ -13,5 +13,6 @@ public final class ShopDataKeys {
     public static final NamespacedKey SHOP_ITEM = new NamespacedKey("eternalchestshops", "shop_item");
     public static final NamespacedKey SHOP_PRICE = new NamespacedKey("eternalchestshops", "shop_price");
     public static final NamespacedKey SHOP_SIGN = new NamespacedKey("eternalchestshops", "shop_sign");
+    public static final NamespacedKey SHOP_DISPLAY_ENTITY = new NamespacedKey("eternalchestshops", "shop_display_entity");
 
 }

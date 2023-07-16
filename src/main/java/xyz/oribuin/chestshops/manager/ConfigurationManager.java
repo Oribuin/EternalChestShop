@@ -35,7 +35,15 @@ public class ConfigurationManager extends AbstractConfigurationManager {
                 "&f%item%",
                 "&#00B4DB&lSelling: &f%stock%",
                 "&f$#00B4DB&l%price_short% &fEach"
-        ), "The text for the selling sign.");
+        ), "The text for the selling sign."),
+
+        // Display Entities
+        DISPLAY_ITEMS("display-items", null, "Display the shop item above the shop.", "Requires 1.20+, Uses display items."),
+        DISPLAY_ITEMS_ENABLED("display-items.enabled", true, "Enable or disable display items."),
+        DISPLAY_ITEMS_RANGE("display-items.range", 10, "The range to display the item in blocks."),
+        DISPLAY_ITEM_Y_OFFSET("display-items.y-offset", 0.5, "The Y offset of the item."),
+//        DISPLAY_ITEMS_SIZE("display-items.size", 0.3, "The width and height of the item."),
+        ;
 
         private final String key;
         private final Object defaultValue;

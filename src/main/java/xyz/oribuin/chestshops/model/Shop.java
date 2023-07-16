@@ -1,5 +1,6 @@
 package xyz.oribuin.chestshops.model;
 
+import dev.rosewood.rosegarden.utils.NMSUtil;
 import dev.rosewood.rosegarden.utils.StringPlaceholders;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -11,6 +12,9 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.Container;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.type.WallSign;
+import org.bukkit.entity.Display;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -39,6 +43,7 @@ public class Shop {
     private @NotNull ShopType type;  // Type of shop, buying or selling
     private @NotNull OfflinePlayer offlineOwner; // Name of the shop owner, used for display purposes
     private @Nullable Sign attached; // The sign attached to the shop
+    private @Nullable Entity displayItem; // The item displayed on the shop
 
     public Shop(@NotNull UUID owner, @NotNull Location location, @NotNull ItemStack item, double price) {
         this.owner = owner;
@@ -256,6 +261,9 @@ public class Shop {
         if (!(this.location.getBlock().getState() instanceof Container container))
             return;
 
+        // Create the entity display
+        this.display();
+
         PersistentDataContainer data = container.getPersistentDataContainer();
         data.set(ShopDataKeys.SHOP_OWNER, PersistentDataType.STRING, this.owner.toString());
         data.set(ShopDataKeys.SHOP_TYPE, PersistentDataType.STRING, this.type.name());
@@ -338,6 +346,26 @@ public class Shop {
                 .orElse(null);
 
         return this.attached;
+    }
+
+    public void display() {
+        if (!Setting.DISPLAY_ITEMS_ENABLED.getBoolean() || NMSUtil.getVersionNumber() < 20)
+            return;
+
+        if (this.displayItem != null)
+            this.displayItem.remove();
+
+        Location entityLoc = ShopUtils.center(this.location).add(0, Setting.DISPLAY_ITEM_Y_OFFSET.getDouble(), 0);
+        this.displayItem = this.location.getWorld().spawn(entityLoc, ItemDisplay.class, itemDisplay -> {
+            itemDisplay.setItemStack(this.item);
+            itemDisplay.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.GROUND);
+//            itemDisplay.setDisplayWidth(Setting.DISPLAY_ITEMS_SIZE.getInt());
+//            itemDisplay.setDisplayHeight(Setting.DISPLAY_ITEMS_SIZE.getInt());
+            itemDisplay.setViewRange(Setting.DISPLAY_ITEMS_RANGE.getInt());
+            itemDisplay.setCustomNameVisible(true);
+            itemDisplay.setBillboard(Display.Billboard.CENTER);
+            itemDisplay.getPersistentDataContainer().set(ShopDataKeys.SHOP_DISPLAY_ENTITY, PersistentDataType.INTEGER, 1);
+        });
     }
 
     /**
