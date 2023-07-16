@@ -6,7 +6,6 @@ import dev.rosewood.rosegarden.command.framework.RoseCommand;
 import dev.rosewood.rosegarden.command.framework.RoseCommandWrapper;
 import dev.rosewood.rosegarden.command.framework.annotation.RoseExecutable;
 import org.bukkit.block.Block;
-import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
 import xyz.oribuin.chestshops.manager.LocaleManager;
 import xyz.oribuin.chestshops.manager.ShopManager;
@@ -23,21 +22,32 @@ public class RemoveCommand extends RoseCommand {
         if (!(context.getSender() instanceof Player player))
             return;
 
+        LocaleManager locale = this.rosePlugin.getManager(LocaleManager.class);
+
         Block target = player.getTargetBlockExact(5);
-        if (target == null || !(target.getState() instanceof Container container)) {
-            this.rosePlugin.getManager(LocaleManager.class).sendMessage(player, "command-remove-invalid-block");
+        if (target == null) {
+            locale.sendMessage(player, "command-remove-invalid-shop");
+            return;
+        }
+
+
+        Shop shop = this.rosePlugin.getManager(ShopManager.class).getShop(target);
+
+        if (shop == null) {
+            locale.sendMessage(player, "command-remove-invalid-shop");
             return;
         }
 
         // TODO: Implement bypass system
-
-        Shop shop = this.rosePlugin.getManager(ShopManager.class).getShop(container);
-
-        if (shop != null) {
-            shop.remove();
+        if (!shop.getOwner().equals(player.getUniqueId())) {
+            locale.sendMessage(player, "command-remove-not-owner");
+            return;
         }
 
+        shop.remove();
+        locale.sendMessage(player, "command-remove-success", shop.getPlaceholders());
     }
+
 
     @Override
     protected String getDefaultName() {

@@ -1,7 +1,6 @@
 package xyz.oribuin.chestshops.util;
 
 import dev.rosewood.rosegarden.RosePlugin;
-import dev.rosewood.rosegarden.utils.StringPlaceholders;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
@@ -9,7 +8,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -26,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -295,15 +294,6 @@ public final class ShopUtils {
         return meta.getDisplayName();
     }
 
-    public static void setLines(Sign sign, List<String> lines, StringPlaceholders placeholders) {
-        if (placeholders == null)
-            placeholders = StringPlaceholders.empty();
-
-        // TODO: Add support for 1.16-1.19 signs and 1.20+ signs
-//        for (int i = 0; i < lines.size(); i++) {
-//            if
-//        }
-    }
 
     /**
      * Get the spare slots for an item in an inventory
@@ -348,4 +338,24 @@ public final class ShopUtils {
         return total;
     }
 
+    /**
+     * Format an amount of money into the shorthand format (e.g. 1.5k)
+     *
+     * @param currency The currency
+     * @return The formatted currency
+     */
+    public static String formatShorthand(double currency) {
+        DecimalFormat format = new DecimalFormat("0.#");
+
+        if (currency >= 1000000000)
+            return format.format(currency / 1000000000) + "b";
+
+        if (currency >= 1000000)
+            return format.format(currency / 1000000) + "m";
+
+        if (currency >= 1000)
+            return format.format(currency / 1000) + "k";
+
+        return format.format(currency);
+    }
 }

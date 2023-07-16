@@ -1,47 +1,34 @@
 package xyz.oribuin.chestshops.listener;
 
-import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
 import org.bukkit.block.Sign;
-import org.bukkit.block.data.type.Chest;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import xyz.oribuin.chestshops.EternalChestShops;
+import xyz.oribuin.chestshops.manager.LocaleManager;
 import xyz.oribuin.chestshops.manager.ShopManager;
 import xyz.oribuin.chestshops.model.Shop;
 import xyz.oribuin.chestshops.model.ShopType;
-import xyz.oribuin.chestshops.model.result.PurchaseResult;
-import xyz.oribuin.chestshops.model.result.SellResult;
 
 @SuppressWarnings("deprecation")
 public class BlockListeners implements Listener {
 
     private final EternalChestShops plugin;
+    private final LocaleManager locale;
+    private final ShopManager manager;
 
     public BlockListeners(EternalChestShops plugin) {
         this.plugin = plugin;
-    }
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
-    public void onPlace(BlockPlaceEvent event) {
-        if (!(event.getBlock().getState() instanceof Chest container))
-            return;
-
-        ShopManager manager = this.plugin.getManager(ShopManager.class);
-        Shop shop = manager.getShop((Container) container);
-        if (shop == null) return;
-
-
-        event.setCancelled(true);
+        this.locale = this.plugin.getManager(LocaleManager.class);
+        this.manager = this.plugin.getManager(ShopManager.class);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
@@ -49,17 +36,21 @@ public class BlockListeners implements Listener {
         if (!(event.getBlock().getState() instanceof Container container))
             return;
 
-        Shop shop = this.plugin.getManager(ShopManager.class).getShop(container);
+        Shop shop = this.manager.getShop(container);
         if (shop == null) return;
 
         event.setCancelled(true);
 
-        if (!event.getPlayer().getUniqueId().equals(shop.getOwner()) || !event.getPlayer().isSneaking()) {
+        if (!event.getPlayer().getUniqueId().equals(shop.getOwner())) {
+            this.locale.sendMessage(event.getPlayer(), "command-remove-not-owner");
             return;
         }
 
-        shop.remove();
+        // Require sneaking to remove shop
+        if (!event.getPlayer().isSneaking()) return;
 
+        shop.remove();
+        this.locale.sendMessage(event.getPlayer(), "command-remove-success");
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
@@ -67,7 +58,7 @@ public class BlockListeners implements Listener {
         if (!(event.getBlock().getState() instanceof Sign sign))
             return;
 
-        ShopManager manager = this.plugin.getManager(ShopManager.class);
+        ShopManager manager = this.manager;
         Shop shop = manager.getShop(sign);
         if (shop == null) return;
 
@@ -82,8 +73,7 @@ public class BlockListeners implements Listener {
 
         // Remove the shop
         shop.remove();
-
-        event.getPlayer().sendMessage(Component.text("You have removed the shop."));
+        this.locale.sendMessage(event.getPlayer(), "command-remove-success");
     }
 
     @EventHandler
@@ -91,27 +81,22 @@ public class BlockListeners implements Listener {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         if (!(event.getClickedBlock().getState() instanceof Sign sign)) return;
 
-        ShopManager manager = this.plugin.getManager(ShopManager.class);
+        ShopManager manager = this.manager;
         Shop shop = manager.getShop(sign);
         if (shop == null) return;
 
         // Update the shop
         shop.update();
         event.setCancelled(true);
-
-        Bukkit.getServer().dispatchCommand(event.getPlayer(), "/cshops stats");
-
-        // TODO: Display stats about the shop
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    @EventHandler
     public void onBuy(PlayerInteractEvent event) {
         Block block = event.getClickedBlock();
-        if (!(block.getState() instanceof Container container)) return;
         if (block == null) return;
 
-        ShopManager manager = this.plugin.getManager(ShopManager.class);
-        Shop shop = manager.getShop(container);
+        ShopManager manager = this.manager;
+        Shop shop = manager.getShop(block);
         if (shop == null) return;
 
         // Update the shop
@@ -120,8 +105,6 @@ public class BlockListeners implements Listener {
         if (event.getAction() != Action.LEFT_CLICK_BLOCK) return;
         event.setCancelled(true);
 
-        // TODO: Switch to locale
-
         // Owner should be able to open the shop
         if (event.getPlayer().getUniqueId().equals(shop.getOwner()) && event.getPlayer().isSneaking()) {
             event.setCancelled(false);
@@ -129,26 +112,28 @@ public class BlockListeners implements Listener {
         }
 
         if (shop.getType() == ShopType.BUYING && shop.getSpace() <= 0) {
-            event.getPlayer().sendMessage(Component.text("The shop is full!"));
+            this.locale.sendMessage(event.getPlayer(), "command-sell-full", shop.getPlaceholders());
             return;
         }
 
         if (shop.getType() == ShopType.SELLING && shop.getStock() <= 0) {
-            event.getPlayer().sendMessage(Component.text("The shop is out of stock!"));
+            this.locale.sendMessage(event.getPlayer(), "command-buy-empty", shop.getPlaceholders());
             return;
         }
 
-        // TODO: Display stats for the shop
-
         Player player = event.getPlayer();
-        player.sendMessage(Component.text("Type the number of items you want to buy."));
+
         manager.getAwaitingResponse().put(player.getUniqueId(), shop);
+
+        switch (shop.getType()) {
+            case SELLING -> this.locale.sendMessage(player, "command-buy-input", shop.getPlaceholders());
+            case BUYING -> this.locale.sendMessage(player, "command-sell-input", shop.getPlaceholders());
+        }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onChat(AsyncPlayerChatEvent event) {
-        ShopManager manager = this.plugin.getManager(ShopManager.class);
-
+        ShopManager manager = this.manager;
         Shop shop = manager.getAwaitingResponse().getIfPresent(event.getPlayer().getUniqueId());
         if (shop == null) return;
 
@@ -158,29 +143,27 @@ public class BlockListeners implements Listener {
         try {
             amount = Integer.parseInt(event.getMessage());
         } catch (NumberFormatException ignored) {
-
-            // TODO: Invalid amount
+            this.locale.sendMessage(event.getPlayer(), "command-buy-invalid-number");
             manager.getAwaitingResponse().invalidate(event.getPlayer().getUniqueId());
             return;
         }
 
         if (amount < 1) {
-            // TODO: Invalid amount
+            this.locale.sendMessage(event.getPlayer(), "command-buy-invalid-number");
+            manager.getAwaitingResponse().invalidate(event.getPlayer().getUniqueId());
             return;
         }
 
         // Has to be done synchronously :( Bukkit API moment
         Bukkit.getScheduler().runTask(this.plugin, () -> {
-            if (shop.getType() == ShopType.SELLING && shop.buy(event.getPlayer(), amount) == PurchaseResult.SUCCESS) {
-                event.getPlayer().sendMessage(Component.text("You bought " + amount + " items to the shop!"));
+            if (shop.getType() == ShopType.SELLING) {
+                shop.buy(event.getPlayer(), amount);
             }
 
-            if (shop.getType() == ShopType.BUYING && shop.sell(event.getPlayer(), amount) == SellResult.SUCCESS) {
-                event.getPlayer().sendMessage(Component.text("You selling " + amount + " items from the shop!"));
+            if (shop.getType() == ShopType.BUYING) {
+                shop.sell(event.getPlayer(), amount);
             }
         });
-
-
     }
 
 }

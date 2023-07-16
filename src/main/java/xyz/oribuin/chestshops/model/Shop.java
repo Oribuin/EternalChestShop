@@ -8,7 +8,6 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.Chest;
 import org.bukkit.block.Container;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.type.WallSign;
@@ -23,8 +22,6 @@ import xyz.oribuin.chestshops.hook.VaultProvider;
 import xyz.oribuin.chestshops.manager.ConfigurationManager.Setting;
 import xyz.oribuin.chestshops.manager.LocaleManager;
 import xyz.oribuin.chestshops.manager.ShopManager;
-import xyz.oribuin.chestshops.model.result.PurchaseResult;
-import xyz.oribuin.chestshops.model.result.SellResult;
 import xyz.oribuin.chestshops.util.ShopUtils;
 
 import java.util.ArrayList;
@@ -58,29 +55,47 @@ public class Shop {
      *
      * @param who    The player buying the items
      * @param amount The amount of items to buy
-     * @return If the purchase was successful
      */
-    public PurchaseResult buy(Player who, int amount) {
-        if (this.type != ShopType.SELLING || !(this.location.getBlock().getState() instanceof Container container) || price <= 0)
-            return PurchaseResult.INVALID_SHOP;
+    public void buy(Player who, int amount) {
+        LocaleManager locale = EternalChestShops.getInstance().getManager(LocaleManager.class);
+
+        if (this.type != ShopType.SELLING || !(this.location.getBlock().getState() instanceof Container container) || price <= 0) {
+            locale.sendMessage(who, "command-buy-invalid-shop");
+            return;
+        }
 
         int totalItems = Math.min(this.getStock(), amount);
         int totalCost = (int) (this.price * totalItems);
         int stock = this.getStock();
 
         // Check if the shop has enough items to sell
-        if (totalItems == 0 || stock < amount)
-            return PurchaseResult.NOT_ENOUGH_ITEMS;
-
-        // Check if the player has enough space to purchase the items
-        int playerSpace = ShopUtils.getSpareSlotsForItem(who.getInventory(), this.item);
-        if (playerSpace < totalItems)
-            return PurchaseResult.NOT_ENOUGH_SPACE;
+        if (totalItems == 0 || stock < amount) {
+            locale.sendMessage(who, "command-buy-not-enough-items", StringPlaceholders.of(
+                    "amount", String.valueOf(totalItems),
+                    "stock", String.valueOf(stock)
+            ));
+            return;
+        }
 
         // Check if the player has enough money to purchase the items
         VaultProvider provider = VaultProvider.getInstance();
-        if (!provider.has(who, totalCost))
-            return PurchaseResult.NOT_ENOUGH_MONEY;
+        if (!provider.has(who, totalCost)) {
+            locale.sendMessage(who, "command-buy-not-enough-money", StringPlaceholders.of(
+                    "amount", String.valueOf(totalItems),
+                    "cost", String.valueOf(totalCost)
+            ));
+            return;
+        }
+
+        // Check if the player has enough space to purchase the items
+        int playerSpace = ShopUtils.getSpareSlotsForItem(who.getInventory(), this.item);
+        if (playerSpace < totalItems) {
+            locale.sendMessage(who, "command-buy-not-enough-space", StringPlaceholders.of(
+                    "amount", String.valueOf(totalItems),
+                    "space", String.valueOf(playerSpace)
+            ));
+            return;
+        }
 
         // Take the money from the player and give it to the shop owner
         provider.take(who, totalCost);
@@ -105,7 +120,13 @@ public class Shop {
 
         // Update the shop data
         this.update();
-        return PurchaseResult.SUCCESS;
+
+        locale.sendMessage(who, "command-buy-success", StringPlaceholders.builder()
+                .addAll(this.getPlaceholders())
+                .add("amount", String.valueOf(totalItems))
+                .add("cost", String.valueOf(totalCost))
+                .build()
+        );
     }
 
     /**
@@ -113,25 +134,45 @@ public class Shop {
      *
      * @param who    The player selling the items
      * @param amount The amount of items to sell
-     * @return If the sale was successful
      */
-    public SellResult sell(Player who, int amount) {
-        if (this.type != ShopType.BUYING || !(this.location.getBlock().getState() instanceof Container container) || price <= 0)
-            return SellResult.INVALID_SHOP;
+    public void sell(Player who, int amount) {
+        LocaleManager locale = EternalChestShops.getInstance().getManager(LocaleManager.class);
+
+        if (this.type != ShopType.BUYING || !(this.location.getBlock().getState() instanceof Container container) || price <= 0) {
+            locale.sendMessage(who, "command-sell-invalid-shop");
+            return;
+        }
 
         int itemsToSell = Math.min(ShopUtils.getAmountOfItem(who.getInventory(), this.item), amount);
         int totalCost = (int) (this.price * itemsToSell);
 
-        if (itemsToSell <= 0)
-            return SellResult.NOT_ENOUGH_ITEMS; // Player does not have enough items to sell
-
-        int space = ShopUtils.getSpareSlotsForItem(container.getInventory(), this.item);
-        if (space < itemsToSell)
-            return SellResult.NOT_ENOUGH_SPACE; // Shop does not have enough space to purchase the item
+        // Player does not have enough items to sell
+        if (itemsToSell <= 0) {
+            locale.sendMessage(who, "command-sell-not-enough-items", StringPlaceholders.of(
+                    "amount", String.valueOf(amount),
+                    "stock", String.valueOf(itemsToSell)
+            ));
+            return;
+        }
 
         VaultProvider provider = VaultProvider.getInstance();
-        if (!provider.has(this.offlineOwner, totalCost))
-            return SellResult.NOT_ENOUGH_MONEY;
+        if (!provider.has(this.offlineOwner, totalCost)) {
+            locale.sendMessage(who, "command-sell-not-enough-money", StringPlaceholders.of(
+                    "amount", String.valueOf(amount),
+                    "cost", String.valueOf(totalCost)
+            ));
+            return;
+        }
+
+        // Shop does not have enough space to purchase the item
+        int space = ShopUtils.getSpareSlotsForItem(container.getInventory(), this.item);
+        if (space < itemsToSell) {
+            locale.sendMessage(who, "command-sell-not-enough-space", StringPlaceholders.of(
+                    "amount", String.valueOf(amount),
+                    "space", String.valueOf(space)
+            ));
+            return;
+        }
 
         provider.take(this.offlineOwner, totalCost);
         provider.give(who, totalCost);
@@ -155,7 +196,13 @@ public class Shop {
 
         // Update the shop data
         this.update();
-        return SellResult.SUCCESS;
+        locale.sendMessage(who, "command-sell-success", StringPlaceholders.builder()
+                .addAll(this.getPlaceholders())
+                .add("amount", String.valueOf(itemsToSell))
+                .add("cost", String.valueOf(totalCost))
+                .build()
+        );
+
     }
 
     /**
@@ -168,15 +215,20 @@ public class Shop {
         if (!(this.location.getBlock().getState() instanceof Container container))
             return false;
 
+        LocaleManager locale = EternalChestShops.getInstance().getManager(LocaleManager.class);
+
         // get player direction as block face
         BlockFace face = ShopUtils.getEmptyFace(container.getBlock(), who.getFacing().getOppositeFace());
-        if (face == BlockFace.SELF)
+        if (face == BlockFace.SELF) {
+            locale.sendMessage(who, "command-create-no-sign-space");
             return false;
+        }
 
         Block signBlock = this.location.getBlock().getRelative(face);
         Material signType = ShopUtils.getEnum(Material.class, Setting.SIGN_SETTINGS_MATERIAL.getString());
-        if (signType == null || !Tag.WALL_SIGNS.isTagged(signType))
-            return false;
+        if (signType == null || !Tag.WALL_SIGNS.isTagged(signType)) {
+            signType = Material.OAK_WALL_SIGN;
+        }
 
         signBlock.setType(signType);
         Sign sign = (Sign) signBlock.getState();
@@ -234,14 +286,14 @@ public class Shop {
 
         // Update the shop in the cache
         EternalChestShops.getInstance().getManager(ShopManager.class).getCachedShop().put(this.location, this);
-
     }
 
+    /**
+     * Remove the chestshop ids from the container
+     */
     public void remove() {
         if (!(this.location.getBlock().getState() instanceof Container container))
             return;
-
-        System.out.println("Removing shop at " + this.location);
 
         PersistentDataContainer data = container.getPersistentDataContainer();
         data.remove(ShopDataKeys.SHOP_OWNER);
@@ -272,7 +324,7 @@ public class Shop {
                 BlockFace.WEST
         );
 
-        // TODO: Improve this system for finding the sign attached to the shop
+        // TODO (Consider) | Improve this system for finding the sign attached to the shop
         this.attached = allowed.stream()
                 .map(f -> this.location.getBlock().getRelative(f))
                 .filter(b ->
@@ -320,9 +372,10 @@ public class Shop {
     public StringPlaceholders getPlaceholders() {
         return StringPlaceholders.builder()
                 .add("owner", Objects.requireNonNullElse(this.offlineOwner.getName(), "Unknown"))
-                .add("price", this.price) // TODO: Format price
+                .add("price", this.price)
+                .add("price_short", ShopUtils.formatShorthand(this.price))
                 .add("item", ShopUtils.getItemName(this.item))
-                .add("type", this.type)
+                .add("type", this.type.name().toLowerCase())
                 .add("stock", this.getStock())
                 .add("space", this.getSpace())
                 .build();
@@ -363,5 +416,6 @@ public class Shop {
     public void setOfflineOwner(@NotNull OfflinePlayer offlineOwner) {
         this.offlineOwner = offlineOwner;
     }
+
 }
 

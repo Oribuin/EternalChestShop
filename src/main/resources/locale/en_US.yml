@@ -27,11 +27,39 @@ command-help-list-description-no-args: '&8 - #00B4DB/%cmd% %subcmd% &7- %desc%'
 command-reload-description: 'Reloads the plugin.'
 command-reload-reloaded: 'Configuration and locale files were reloaded'
 
+# Buy Command
+command-buy-description: 'Buy items from a shop'
+command-buy-input: 'Please input the amount of items you would like to buy.'
+command-buy-success: 'You have successfully purchased #00B4DB%amount% %item% &ffrom #00B4DB%owner%&f.'
+command-buy-invalid-shop: 'The shop you''re trying to buy from is invalid.'
+command-buy-not-enough-items: 'The shop you''re trying to buy doesnt have that many items.'
+command-buy-not-enough-money: 'You dont have enough money to buy that.'
+command-buy-not-enough-space: 'You dont have enough space in your inventory to buy that.'
+command-buy-is-owner: 'You cannot buy from your own shop.'
+command-buy-empty: 'The shop you''re trying to buy from is empty.'
+
 # Create Command
 command-create-description: 'Create a new chest shop'
 command-create-success: 'You have successfully created a chest shop.'
 command-create-invalid-item: 'You must be holding an item to create a chest shop.'
 command-create-invalid-block: 'You must be looking at a container to create a chest shop.'
+
+# Remove Command
+command-remove-description: 'Remove a chest shop'
+command-remove-success: 'You have successfully removed a chest shop.'
+command-remove-invalid-shop: 'You are not looking at a chest.'
+command-remove-not-owner: 'You are not the owner of this chest shop.'
+
+# Sell Command
+command-sell-description: 'Sell items to a shop'
+command-sell-input: 'Please input the amount of items you would like to sell.'
+command-sell-success: 'You have successfully sold #00B4DB%amount% %item% &fto #00B4DB%owner%&f.'
+command-sell-invalid-shop: 'The shop you''re trying to sell to is invalid.'
+command-sell-not-enough-items: 'You dont have that many items to sell.'
+command-sell-not-enough-space: 'The shop you''re trying to sell cannot fit this many items.'
+command-sell-not-enough-money: 'The shop you''re trying to sell to doesnt have enough money.'
+command-sell-is-owner: 'You cannot sell to your own shop.'
+command-sell-full: 'The shop you''re trying to sell to is full.'
 
 # Error Messages
 argument-handler-shop-type: 'Please specify a valid shop type. [Selling/Buying]'

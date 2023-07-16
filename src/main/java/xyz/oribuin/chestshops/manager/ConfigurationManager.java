@@ -28,13 +28,13 @@ public class ConfigurationManager extends AbstractConfigurationManager {
                 "&f%owner%",
                 "&f%item%",
                 "&#00B4DB&lBuying: &f%space%",
-                "&f$#00B4DB&l%price% &fEach"
+                "&f$#00B4DB&l%price_short% &fEach"
         ), "The text for the buying sign."),
         SIGN_TEXT_SETTINGS_SELLING("sign-settings.selling", List.of(
                 "&f%owner%",
                 "&f%item%",
                 "&#00B4DB&lSelling: &f%stock%",
-                "&f$#00B4DB&l%price% &fEach"
+                "&f$#00B4DB&l%price_short% &fEach"
         ), "The text for the selling sign.");
 
         private final String key;

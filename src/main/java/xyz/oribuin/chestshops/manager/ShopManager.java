@@ -27,9 +27,8 @@ public class ShopManager extends Manager {
 
     private final Map<Location, Shop> cachedShops = new HashMap<>();
     private final Cache<UUID, Shop> awaitingResponse = CacheBuilder.newBuilder()
-            .expireAfterAccess(60, TimeUnit.SECONDS)
+            .expireAfterWrite(60, TimeUnit.SECONDS)
             .build();
-
 
     public ShopManager(RosePlugin rosePlugin) {
         super(rosePlugin);
@@ -37,7 +36,7 @@ public class ShopManager extends Manager {
 
     @Override
     public void reload() {
-
+        this.cachedShops.clear();
     }
 
     /**
@@ -94,20 +93,17 @@ public class ShopManager extends Manager {
      */
     public Shop getShop(Sign sign) {
         if (sign == null || !(sign.getBlockData() instanceof WallSign attachable)) {
-            System.out.println("Sign is null or not attachable");
             return null;
         }
 
         PersistentDataContainer signContainer = sign.getPersistentDataContainer();
         if (!signContainer.has(ShopDataKeys.SHOP_SIGN, PersistentDataType.INTEGER)) {
-            System.out.println("Sign does not have shop sign key");
             return null;
         }
 
         // Get attached block
         Block block = sign.getBlock().getRelative(attachable.getFacing().getOppositeFace());
         if (!(block.getState() instanceof Container container)) {
-            System.out.println("Attached block is not a container, it is a " + block.getType());
             return null;
         }
 

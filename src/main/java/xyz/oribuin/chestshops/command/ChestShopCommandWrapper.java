@@ -18,7 +18,7 @@ public class ChestShopCommandWrapper extends RoseCommandWrapper {
 
     @Override
     public List<String> getDefaultAliases() {
-        return List.of("echestshops", "chestshops" );
+        return List.of("echestshops", "chestshops");
     }
 
     @Override
