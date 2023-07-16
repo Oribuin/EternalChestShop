@@ -4,6 +4,7 @@ import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.rosegarden.config.CommentedFileConfiguration;
 import dev.rosewood.rosegarden.config.RoseSetting;
 import dev.rosewood.rosegarden.manager.AbstractConfigurationManager;
+import org.bukkit.Material;
 import xyz.oribuin.chestshops.EternalChestShops;
 
 import java.util.List;
@@ -21,18 +22,19 @@ public class ConfigurationManager extends AbstractConfigurationManager {
 
     public enum Setting implements RoseSetting {
 
-        SIGN_TEXT_SETTINGS("sign-text-settings", null, "Modify the text for the signs here."),
-        SIGN_TEXT_SETTINGS_BUYING("sign-text-settings.buying", List.of(
+        SIGN_SETTINGS("sign-settings", null, "Modify the text for the signs here."),
+        SIGN_SETTINGS_MATERIAL("sign-settings.material", Material.OAK_WALL_SIGN, "The material for the signs.", "This sign must be a wall sign."),
+        SIGN_TEXT_SETTINGS_BUYING("sign-settings.buying", List.of(
                 "&f%owner%",
                 "&f%item%",
                 "&#00B4DB&lBuying: &f%space%",
                 "&f$#00B4DB&l%price% &fEach"
         ), "The text for the buying sign."),
-        SIGN_TEXT_SETTINGS_SELLING("sign-text-settings.selling", List.of(
+        SIGN_TEXT_SETTINGS_SELLING("sign-settings.selling", List.of(
                 "&f%owner%",
                 "&f%item%",
                 "&#00B4DB&lSelling: &f%stock%",
-                "&f$#00B4DB&l%stock% &fEach"
+                "&f$#00B4DB&l%price% &fEach"
         ), "The text for the selling sign.");
 
         private final String key;

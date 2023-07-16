@@ -26,14 +26,12 @@ public class StatsCommand extends RoseCommand {
             return;
 
         Block target = player.getTargetBlockExact(5);
-        if (target == null || !(target.getState() instanceof Container container)) {
+        if (target == null) {
             this.rosePlugin.getManager(LocaleManager.class).sendMessage(player, "command-stats-invalid-block");
             return;
         }
 
-        Shop shop = this.rosePlugin.getManager(ShopManager.class).getShop(container);
-
-
+        Shop shop = this.rosePlugin.getManager(ShopManager.class).getShop(target);
         if (shop != null) {
             List<String> message = List.of(
                     "Stats for the shop:",

@@ -3,7 +3,7 @@ package xyz.oribuin.chestshops.manager;
 import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.rosegarden.command.framework.RoseCommandWrapper;
 import dev.rosewood.rosegarden.manager.AbstractCommandManager;
-import xyz.oribuin.chestshops.command.ExampleCommandWrapper;
+import xyz.oribuin.chestshops.command.ChestShopCommandWrapper;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ public class CommandManager extends AbstractCommandManager {
 
     @Override
     public List<Class<? extends RoseCommandWrapper>> getRootCommands() {
-        return List.of(ExampleCommandWrapper.class);
+        return List.of(ChestShopCommandWrapper.class);
     }
 
     @Override

@@ -4,6 +4,7 @@ import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.rosegarden.command.framework.CommandContext;
 import dev.rosewood.rosegarden.command.framework.RoseCommand;
 import dev.rosewood.rosegarden.command.framework.RoseCommandWrapper;
+import dev.rosewood.rosegarden.command.framework.annotation.Optional;
 import dev.rosewood.rosegarden.command.framework.annotation.RoseExecutable;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
@@ -11,8 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import xyz.oribuin.chestshops.manager.LocaleManager;
 import xyz.oribuin.chestshops.model.Shop;
-
-import java.util.List;
+import xyz.oribuin.chestshops.model.ShopType;
 
 public class CreateCommand extends RoseCommand {
 
@@ -21,39 +21,34 @@ public class CreateCommand extends RoseCommand {
     }
 
     @RoseExecutable
-    public void execute(CommandContext context, Double price) {
+    public void execute(CommandContext context, Double price, @Optional ShopType type) {
         if (!(context.getSender() instanceof Player player))
             return;
 
+        final LocaleManager locale = this.rosePlugin.getManager(LocaleManager.class);
+
         ItemStack item = player.getInventory().getItemInMainHand().clone();
         if (item.getType().isAir() || item.getAmount() == 0) {
-            this.rosePlugin.getManager(LocaleManager.class).sendMessage(player, "command-create-invalid-item");
+            locale.sendMessage(player, "command-create-invalid-item");
+            return;
+        }
+
+
+        Block target = player.getTargetBlockExact(5);
+        if (target == null || !(target.getState() instanceof Container container)) {
+            locale.sendMessage(player, "command-create-invalid-block");
             return;
         }
 
         item.setAmount(1);
-
-        Block target = player.getTargetBlockExact(5);
-        if (target == null || !(target.getState() instanceof Container container)) {
-            this.rosePlugin.getManager(LocaleManager.class).sendMessage(player, "command-create-invalid-block");
-            return;
-        }
-
         Shop shop = new Shop(player.getUniqueId(), container.getLocation(), item, price);
 
+        if (type != null)
+            shop.setType(type);
+
         if (shop.create(player)) {
-            List<String> message = List.of(
-                    "You have successfully created a shop.",
-                    "- Owner: %owner%",
-                    "- Price: %price%",
-                    "- Item: %item%",
-                    "- Type: %type%",
-                    "- Stock: %stock%"
-            );
-
-            this.rosePlugin.getManager(LocaleManager.class).sendCustomMessage(player, message, shop.getPlaceholders());
+            locale.sendMessage(player, "command-create-success", shop.getPlaceholders());
         }
-
 
     }
 

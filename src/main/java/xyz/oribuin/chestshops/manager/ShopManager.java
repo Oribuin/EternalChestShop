@@ -4,26 +4,32 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.rosegarden.manager.Manager;
+import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
+import org.bukkit.block.Sign;
+import org.bukkit.block.data.type.WallSign;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.material.Attachable;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.jetbrains.annotations.NotNull;
 import xyz.oribuin.chestshops.model.Shop;
 import xyz.oribuin.chestshops.model.ShopDataKeys;
 import xyz.oribuin.chestshops.model.ShopType;
 import xyz.oribuin.chestshops.util.ShopUtils;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class ShopManager extends Manager {
 
-    // Store who is buying what from where
+    private final Map<Location, Shop> cachedShops = new HashMap<>();
     private final Cache<UUID, Shop> awaitingResponse = CacheBuilder.newBuilder()
             .expireAfterAccess(60, TimeUnit.SECONDS)
             .build();
+
 
     public ShopManager(RosePlugin rosePlugin) {
         super(rosePlugin);
@@ -35,29 +41,19 @@ public class ShopManager extends Manager {
     }
 
     /**
-     * Get a shop from a block
+     * Get a shop from either a container or a sign.
      *
      * @param block The block to get the shop from
      * @return The shop
      */
-    public Shop getShop(Block block) {
-        Container container = null;
+    public Shop getShop(@NotNull Block block) {
+        if (block.getState() instanceof Container container)
+            return this.getShop(container);
 
-        // Check if the block is a container
-        if (block.getState() instanceof Container casted)
-            container = casted;
+        if (block.getState() instanceof Sign sign)
+            return this.getShop(sign);
 
-        // Check if the block is attached to a container
-        if (block.getState() instanceof Attachable attachable && container == null) {
-            Block relative = block.getRelative(attachable.getAttachedFace());
-            if (relative.getState() instanceof Container casted)
-                container = casted;
-        }
-
-        if (container == null)
-            return null;
-
-        return this.getShop(container);
+        return null;
     }
 
     /**
@@ -67,6 +63,9 @@ public class ShopManager extends Manager {
      * @return The shop
      */
     public Shop getShop(Container container) {
+        if (this.cachedShops.containsKey(container.getLocation()))
+            return this.cachedShops.get(container.getLocation());
+
         PersistentDataContainer data = container.getPersistentDataContainer();
         if (!data.has(ShopDataKeys.SHOP_OWNER, PersistentDataType.STRING))
             return null;
@@ -83,10 +82,44 @@ public class ShopManager extends Manager {
         Shop shop = new Shop(UUID.fromString(owner), container.getLocation(), item, price);
         shop.setType(ShopUtils.getEnum(ShopType.class, type));
 
+        this.cachedShops.put(container.getLocation(), shop);
         return shop;
     }
 
-    // TODO: Get shop via sign.
+    /**
+     * Get the shop attached to a sign if it exists
+     *
+     * @param sign The sign to get the shop from
+     * @return The shop
+     */
+    public Shop getShop(Sign sign) {
+        if (sign == null || !(sign.getBlockData() instanceof WallSign attachable)) {
+            System.out.println("Sign is null or not attachable");
+            return null;
+        }
+
+        PersistentDataContainer signContainer = sign.getPersistentDataContainer();
+        if (!signContainer.has(ShopDataKeys.SHOP_SIGN, PersistentDataType.INTEGER)) {
+            System.out.println("Sign does not have shop sign key");
+            return null;
+        }
+
+        // Get attached block
+        Block block = sign.getBlock().getRelative(attachable.getFacing().getOppositeFace());
+        if (!(block.getState() instanceof Container container)) {
+            System.out.println("Attached block is not a container, it is a " + block.getType());
+            return null;
+        }
+
+        PersistentDataContainer containerContainer = container.getPersistentDataContainer();
+        String signOwner = signContainer.get(ShopDataKeys.SHOP_OWNER, PersistentDataType.STRING);
+        String containerOwner = containerContainer.get(ShopDataKeys.SHOP_OWNER, PersistentDataType.STRING);
+
+        if (signOwner == null || !signOwner.equals(containerOwner))
+            return null;
+
+        return this.getShop(container); // Get the shop from the container
+    }
 
     /**
      * Check if a block is a shop
@@ -95,6 +128,9 @@ public class ShopManager extends Manager {
      * @return If the block is a shop
      */
     public boolean isShop(Block block) {
+        if (this.cachedShops.containsKey(block.getLocation()))
+            return true;
+
         if (!(block.getState() instanceof Container container))
             return false;
 
@@ -122,6 +158,10 @@ public class ShopManager extends Manager {
     @Override
     public void disable() {
 
+    }
+
+    public Map<Location, Shop> getCachedShop() {
+        return cachedShops;
     }
 
     public Cache<UUID, Shop> getAwaitingResponse() {

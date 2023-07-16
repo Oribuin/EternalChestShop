@@ -4,6 +4,7 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
+import org.bukkit.block.Sign;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -32,20 +33,15 @@ public class BlockListeners implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
     public void onPlace(BlockPlaceEvent event) {
-        if (!(event.getBlock().getState() instanceof Container container))
+        if (!(event.getBlock().getState() instanceof Chest container))
             return;
 
         ShopManager manager = this.plugin.getManager(ShopManager.class);
-        Shop shop = manager.getShop(container);
+        Shop shop = manager.getShop((Container) container);
+        if (shop == null) return;
 
-        // Placing shops can cause unintentional side effects
-        if (shop != null) {
-            if (event.getBlock().getBlockData() instanceof Chest chest) {
-                chest.setType(Chest.Type.SINGLE); // Make sure the chest is single.
-            }
 
-            shop.remove();
-        }
+        event.setCancelled(true);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
@@ -56,14 +52,56 @@ public class BlockListeners implements Listener {
         Shop shop = this.plugin.getManager(ShopManager.class).getShop(container);
         if (shop == null) return;
 
-        if (!event.getPlayer().getUniqueId().equals(shop.getOwner())) {
+        event.setCancelled(true);
+
+        if (!event.getPlayer().getUniqueId().equals(shop.getOwner()) || !event.getPlayer().isSneaking()) {
+            return;
+        }
+
+        shop.remove();
+
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    public void onSignBreak(BlockBreakEvent event) {
+        if (!(event.getBlock().getState() instanceof Sign sign))
+            return;
+
+        ShopManager manager = this.plugin.getManager(ShopManager.class);
+        Shop shop = manager.getShop(sign);
+        if (shop == null) return;
+
+        // no break if not owner
+        if (!event.getPlayer().getUniqueId().equals(shop.getOwner()) || !event.getPlayer().isSneaking()) {
             event.setCancelled(true);
             return;
         }
 
-        if (!event.getPlayer().isSneaking()) {
-            event.setCancelled(true);
-        }
+        // Cancel the event.
+        event.setCancelled(true);
+
+        // Remove the shop
+        shop.remove();
+
+        event.getPlayer().sendMessage(Component.text("You have removed the shop."));
+    }
+
+    @EventHandler
+    public void onSignInteract(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        if (!(event.getClickedBlock().getState() instanceof Sign sign)) return;
+
+        ShopManager manager = this.plugin.getManager(ShopManager.class);
+        Shop shop = manager.getShop(sign);
+        if (shop == null) return;
+
+        // Update the shop
+        shop.update();
+        event.setCancelled(true);
+
+        Bukkit.getServer().dispatchCommand(event.getPlayer(), "/cshops stats");
+
+        // TODO: Display stats about the shop
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)

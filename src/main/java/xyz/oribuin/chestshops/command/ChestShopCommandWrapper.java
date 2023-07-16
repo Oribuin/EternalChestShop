@@ -5,9 +5,9 @@ import dev.rosewood.rosegarden.command.framework.RoseCommandWrapper;
 
 import java.util.List;
 
-public class ExampleCommandWrapper extends RoseCommandWrapper {
+public class ChestShopCommandWrapper extends RoseCommandWrapper {
 
-    public ExampleCommandWrapper(RosePlugin rosePlugin) {
+    public ChestShopCommandWrapper(RosePlugin rosePlugin) {
         super(rosePlugin);
     }
 
@@ -18,7 +18,7 @@ public class ExampleCommandWrapper extends RoseCommandWrapper {
 
     @Override
     public List<String> getDefaultAliases() {
-        return List.of("echestshops", "chestshops");
+        return List.of("echestshops", "chestshops" );
     }
 
     @Override

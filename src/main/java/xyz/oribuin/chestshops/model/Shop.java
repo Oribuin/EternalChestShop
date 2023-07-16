@@ -5,8 +5,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.Chest;
 import org.bukkit.block.Container;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.type.WallSign;
@@ -15,10 +17,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import xyz.oribuin.chestshops.EternalChestShops;
 import xyz.oribuin.chestshops.hook.VaultProvider;
 import xyz.oribuin.chestshops.manager.ConfigurationManager.Setting;
 import xyz.oribuin.chestshops.manager.LocaleManager;
+import xyz.oribuin.chestshops.manager.ShopManager;
 import xyz.oribuin.chestshops.model.result.PurchaseResult;
 import xyz.oribuin.chestshops.model.result.SellResult;
 import xyz.oribuin.chestshops.util.ShopUtils;
@@ -37,6 +41,7 @@ public class Shop {
     private double price; // Price of the item
     private @NotNull ShopType type;  // Type of shop, buying or selling
     private @NotNull OfflinePlayer offlineOwner; // Name of the shop owner, used for display purposes
+    private @Nullable Sign attached; // The sign attached to the shop
 
     public Shop(@NotNull UUID owner, @NotNull Location location, @NotNull ItemStack item, double price) {
         this.owner = owner;
@@ -45,10 +50,11 @@ public class Shop {
         this.price = Math.max(price, 0);
         this.type = ShopType.SELLING;
         this.offlineOwner = Bukkit.getOfflinePlayer(owner);
+        this.attached = this.getAttached();
     }
 
     /**
-     * Buy items from the shop (TODO: Add PurchaseResult enum)
+     * Buy items from the shop
      *
      * @param who    The player buying the items
      * @param amount The amount of items to buy
@@ -103,7 +109,7 @@ public class Shop {
     }
 
     /**
-     * Sell items to the shop (TODO: Add SellResult enum)
+     * Sell items to the shop
      *
      * @param who    The player selling the items
      * @param amount The amount of items to sell
@@ -125,7 +131,7 @@ public class Shop {
 
         VaultProvider provider = VaultProvider.getInstance();
         if (!provider.has(this.offlineOwner, totalCost))
-            return SellResult.INVALID_SHOP;
+            return SellResult.NOT_ENOUGH_MONEY;
 
         provider.take(this.offlineOwner, totalCost);
         provider.give(who, totalCost);
@@ -146,7 +152,6 @@ public class Shop {
         ItemStack[] toTransfer = stacks.toArray(new ItemStack[0]);
         who.getInventory().removeItem(toTransfer);
         container.getInventory().addItem(toTransfer);
-
 
         // Update the shop data
         this.update();
@@ -169,13 +174,16 @@ public class Shop {
             return false;
 
         Block signBlock = this.location.getBlock().getRelative(face);
-        signBlock.setType(Material.OAK_WALL_SIGN); // TODO: Add support for other sign types
-        Sign sign = (Sign) signBlock.getState();
+        Material signType = ShopUtils.getEnum(Material.class, Setting.SIGN_SETTINGS_MATERIAL.getString());
+        if (signType == null || !Tag.WALL_SIGNS.isTagged(signType))
+            return false;
 
-        if (signBlock.getBlockData() instanceof WallSign attachable) {
-            attachable.setFacing(face);
-            sign.setBlockData(attachable);
-        }
+        signBlock.setType(signType);
+        Sign sign = (Sign) signBlock.getState();
+        WallSign wallSign = (WallSign) signBlock.getBlockData();
+
+        wallSign.setFacing(face);
+        sign.setBlockData(wallSign);
 
         PersistentDataContainer signContainer = sign.getPersistentDataContainer();
         signContainer.set(ShopDataKeys.SHOP_OWNER, PersistentDataType.STRING, this.owner.toString());
@@ -206,50 +214,34 @@ public class Shop {
         container.update();
 
         // Get connecting sign and update it
-        List<BlockFace> allowed = List.of(BlockFace.NORTH,
-                BlockFace.EAST,
-                BlockFace.SOUTH,
-                BlockFace.WEST,
-                BlockFace.UP
-        );
+        Sign attachedSign = this.getAttached();
+        if (attachedSign != null) {
+            List<String> lines = new ArrayList<>(this.type == ShopType.SELLING
+                    ? Setting.SIGN_TEXT_SETTINGS_SELLING.getStringList()
+                    : Setting.SIGN_TEXT_SETTINGS_BUYING.getStringList()
+            );
 
-        // TODO: Improve system for finding attached signs, this seems kinda scuffed
-        Sign attachedSign = allowed.stream()
-                .map(f -> this.location.getBlock().getRelative(f))
-                .filter(b ->
-                        b.getState() instanceof Sign sign
-                                && sign.getPersistentDataContainer().has(ShopDataKeys.SHOP_SIGN, PersistentDataType.INTEGER)
-                                && sign.getPersistentDataContainer().has(ShopDataKeys.SHOP_OWNER, PersistentDataType.STRING)
-                                && Objects.equals(sign.getPersistentDataContainer().get(ShopDataKeys.SHOP_OWNER, PersistentDataType.STRING), this.owner.toString())
-                )
-                .map(b -> (Sign) b.getState())
-                .findFirst()
-                .orElse(null);
+            LocaleManager locale = EternalChestShops.getInstance().getManager(LocaleManager.class);
+            lines = lines.stream()
+                    .map(s -> locale.format(null, s, this.getPlaceholders()))
+                    .collect(Collectors.toList());
 
-        if (attachedSign == null) {
-            System.out.println("Could not find attached sign to shop at " + this.location.toString());
-            return;
+            for (int i = 0; i < lines.size(); i++)
+                attachedSign.setLine(i, lines.get(i));
+
+            attachedSign.update();
         }
 
-        List<String> lines = new ArrayList<>(this.type == ShopType.SELLING
-                ? Setting.SIGN_TEXT_SETTINGS_SELLING.getStringList()
-                : Setting.SIGN_TEXT_SETTINGS_BUYING.getStringList()
-        );
+        // Update the shop in the cache
+        EternalChestShops.getInstance().getManager(ShopManager.class).getCachedShop().put(this.location, this);
 
-        LocaleManager locale = EternalChestShops.getInstance().getManager(LocaleManager.class);
-        lines = lines.stream()
-                .map(s -> locale.format(null, s, this.getPlaceholders()))
-                .collect(Collectors.toList());
-
-        for (int i = 0; i < lines.size(); i++)
-            attachedSign.setLine(i, lines.get(i));
-
-        attachedSign.update();
     }
 
     public void remove() {
         if (!(this.location.getBlock().getState() instanceof Container container))
             return;
+
+        System.out.println("Removing shop at " + this.location);
 
         PersistentDataContainer data = container.getPersistentDataContainer();
         data.remove(ShopDataKeys.SHOP_OWNER);
@@ -260,14 +252,28 @@ public class Shop {
         container.update();
 
         // Remove the sign attached to the shop
+        Sign attached = this.getAttached();
+        if (attached != null) {
+            attached.getBlock().setType(Material.AIR);
+            this.attached = null;
+        }
+
+        EternalChestShops.getInstance().getManager(ShopManager.class).getCachedShop().remove(this.location);
+    }
+
+    @Nullable
+    public Sign getAttached() {
+        if (this.attached != null)
+            return this.attached;
+
         List<BlockFace> allowed = List.of(BlockFace.NORTH,
                 BlockFace.EAST,
                 BlockFace.SOUTH,
-                BlockFace.WEST,
-                BlockFace.UP
+                BlockFace.WEST
         );
 
-        Sign attachedSign = allowed.stream()
+        // TODO: Improve this system for finding the sign attached to the shop
+        this.attached = allowed.stream()
                 .map(f -> this.location.getBlock().getRelative(f))
                 .filter(b ->
                         b.getState() instanceof Sign sign
@@ -279,9 +285,7 @@ public class Shop {
                 .findFirst()
                 .orElse(null);
 
-        if (attachedSign == null) return;
-
-        attachedSign.getBlock().setType(Material.AIR);
+        return this.attached;
     }
 
     /**
@@ -316,7 +320,7 @@ public class Shop {
     public StringPlaceholders getPlaceholders() {
         return StringPlaceholders.builder()
                 .add("owner", Objects.requireNonNullElse(this.offlineOwner.getName(), "Unknown"))
-                .add("price", this.price)
+                .add("price", this.price) // TODO: Format price
                 .add("item", ShopUtils.getItemName(this.item))
                 .add("type", this.type)
                 .add("stock", this.getStock())
