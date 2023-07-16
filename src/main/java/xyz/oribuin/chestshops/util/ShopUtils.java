@@ -8,7 +8,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -25,7 +24,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.List;
 
 public final class ShopUtils {
@@ -66,22 +64,6 @@ public final class ShopUtils {
         }
 
         return Color.fromRGB(awtColor.getRed(), awtColor.getGreen(), awtColor.getBlue());
-    }
-
-    /**
-     * Get the total number of spare slots in a player's inventory
-     *
-     * @param player The player
-     * @return The amount of empty slots.
-     */
-    public static int getSpareSlots(Player player) {
-        final List<Integer> slots = new ArrayList<>();
-        for (int i = 0; i < 36; i++)
-            slots.add(i);
-
-        return (int) slots.stream().map(integer -> player.getInventory().getItem(integer))
-                .filter(itemStack -> itemStack == null || itemStack.getType() == Material.AIR)
-                .count();
     }
 
     /**
