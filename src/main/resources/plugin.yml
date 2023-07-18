@@ -8,3 +8,32 @@ depend:
   - Vault
 softdepend:
   - PlaceholderAPI
+permissions:
+  eternalchestshops.*:
+    default: op
+    description: Gives access to all EternalChestShop permissions.
+    children:
+      - eternalchestshops.bypass
+      - eternalchestshops.create
+      - eternalchestshops.remove
+      - eternalchestshops.buy
+      - eternalchestshops.sell
+      - eternalchestshops.reload
+  eternalchestshops.bypass:
+    default: op
+    description: Allows the player to bypass chest shop protections.
+  eternalchestshops.create:
+    default: op
+    description: Allows the player to create a chest shop with a command.
+  eternalchestshops.remove:
+    default: op
+    description: Allows the player to remove a chest shop with a command.
+  eternalchestshops.buy:
+    default: op
+    description: Allows the player to buy from a chest shop with a command.
+  eternalchestshops.sell:
+    default: op
+    description: Allows the player to sell to a chest shop with a command.
+  eternalchestshops.reload:
+    default: op
+    description: Allows the player to reload the plugin with a command.
