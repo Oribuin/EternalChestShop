@@ -3,7 +3,7 @@ main: xyz.oribuin.chestshops.EternalChestShops
 version: '@version@'
 api-version: '1.16'
 author: Oribuin
-description: A plugin that does stuff
+description: Create player owned shops on any container.
 depend:
   - Vault
 softdepend:
