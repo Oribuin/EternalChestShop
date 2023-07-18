@@ -2,6 +2,7 @@ package xyz.oribuin.chestshops.manager;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.Sets;
 import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.rosegarden.manager.Manager;
 import org.bukkit.Location;
@@ -20,11 +21,13 @@ import xyz.oribuin.chestshops.util.ShopUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class ShopManager extends Manager {
 
+    private final Set<UUID> bypassing = Sets.newConcurrentHashSet();
     private final Map<Location, Shop> cachedShops = new HashMap<>();
     private final Cache<UUID, Shop> awaitingResponse = CacheBuilder.newBuilder()
             .expireAfterWrite(60, TimeUnit.SECONDS)
@@ -131,6 +134,29 @@ public class ShopManager extends Manager {
             return false;
 
         return container.getPersistentDataContainer().has(ShopDataKeys.SHOP_OWNER, PersistentDataType.STRING);
+    }
+
+    /**
+     * Check if a player is bypassing shops
+     *
+     * @param uuid The uuid of the player
+     * @return If the player is bypassing
+     */
+    public boolean isBypassing(UUID uuid) {
+        return this.bypassing.contains(uuid);
+    }
+
+    /**
+     * Toggle the bypassing of a player for shops
+     *
+     * @param uuid The uuid of the player
+     * @return If the player is bypassing
+     */
+    public boolean toggleBypassing(UUID uuid) {
+        if (!this.bypassing.remove(uuid))
+            return this.bypassing.add(uuid);
+
+        return false;
     }
 
     /**

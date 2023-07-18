@@ -38,6 +38,11 @@ command-buy-not-enough-space: 'You dont have enough space in your inventory to b
 command-buy-is-owner: 'You cannot buy from your own shop.'
 command-buy-empty: 'The shop you''re trying to buy from is empty.'
 
+# Bypass Command
+command-bypass-description: 'Bypass a chest shop protection'
+command-bypass-enabled: 'You are now bypassing chest shop protections.'
+command-bypass-disabled: 'You are no longer bypassing chest shop protections.'
+
 # Create Command
 command-create-description: 'Create a new chest shop'
 command-create-success: 'You have successfully created a chest shop.'

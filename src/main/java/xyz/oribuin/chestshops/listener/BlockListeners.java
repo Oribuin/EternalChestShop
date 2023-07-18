@@ -41,7 +41,7 @@ public class BlockListeners implements Listener {
 
         event.setCancelled(true);
 
-        if (!event.getPlayer().getUniqueId().equals(shop.getOwner())) {
+        if (!event.getPlayer().getUniqueId().equals(shop.getOwner()) && !this.manager.isBypassing(event.getPlayer().getUniqueId())) {
             this.locale.sendMessage(event.getPlayer(), "command-remove-not-owner");
             return;
         }
@@ -63,7 +63,7 @@ public class BlockListeners implements Listener {
         if (shop == null) return;
 
         // no break if not owner
-        if (!event.getPlayer().getUniqueId().equals(shop.getOwner()) || !event.getPlayer().isSneaking()) {
+        if (!event.getPlayer().getUniqueId().equals(shop.getOwner()) || !event.getPlayer().isSneaking() && !manager.isBypassing(event.getPlayer().getUniqueId())) {
             event.setCancelled(true);
             return;
         }
@@ -106,7 +106,7 @@ public class BlockListeners implements Listener {
         event.setCancelled(true);
 
         // Owner should be able to open the shop
-        if (event.getPlayer().getUniqueId().equals(shop.getOwner()) && event.getPlayer().isSneaking()) {
+        if (event.getPlayer().getUniqueId().equals(shop.getOwner()) && event.getPlayer().isSneaking() && !manager.isBypassing(event.getPlayer().getUniqueId())) {
             event.setCancelled(false);
             return;
         }

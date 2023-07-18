@@ -38,8 +38,7 @@ public class RemoveCommand extends RoseCommand {
             return;
         }
 
-        // TODO: Implement bypass system
-        if (!shop.getOwner().equals(player.getUniqueId())) {
+        if (!shop.getOwner().equals(player.getUniqueId()) && !this.rosePlugin.getManager(ShopManager.class).isBypassing(player.getUniqueId())) {
             locale.sendMessage(player, "command-remove-not-owner");
             return;
         }
