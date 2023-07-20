@@ -49,6 +49,7 @@ command-create-success: 'You have successfully created a chest shop.'
 command-create-invalid-item: 'You must be holding an item to create a chest shop.'
 command-create-invalid-block: 'You must be looking at a container to create a chest shop.'
 command-create-invalid-sign: 'There must be an empty sign infront of the shop.'
+command-create-already-shop: 'There is already a chest shop here.'
 
 # Remove Command
 command-remove-description: 'Remove a chest shop'

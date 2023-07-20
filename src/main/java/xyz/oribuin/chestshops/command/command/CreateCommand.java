@@ -13,6 +13,7 @@ import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import xyz.oribuin.chestshops.manager.LocaleManager;
+import xyz.oribuin.chestshops.manager.ShopManager;
 import xyz.oribuin.chestshops.model.Shop;
 import xyz.oribuin.chestshops.model.ShopType;
 
@@ -44,6 +45,11 @@ public class CreateCommand extends RoseCommand {
         Block signBlock = target.getRelative(player.getFacing().getOppositeFace());
         if (signBlock.getType() != Material.AIR) {
             locale.sendMessage(player, "command-create-invalid-sign");
+            return;
+        }
+
+        if (this.rosePlugin.getManager(ShopManager.class).isShop(target)) {
+            locale.sendMessage(player, "command-create-already-shop");
             return;
         }
 
