@@ -6,7 +6,9 @@ import dev.rosewood.rosegarden.command.framework.RoseCommand;
 import dev.rosewood.rosegarden.command.framework.RoseCommandWrapper;
 import dev.rosewood.rosegarden.command.framework.annotation.Optional;
 import dev.rosewood.rosegarden.command.framework.annotation.RoseExecutable;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -33,18 +35,24 @@ public class CreateCommand extends RoseCommand {
             return;
         }
 
-
         Block target = player.getTargetBlockExact(5);
         if (target == null || !(target.getState() instanceof Container container)) {
             locale.sendMessage(player, "command-create-invalid-block");
             return;
         }
 
-        item.setAmount(1);
-        Shop shop = new Shop(player.getUniqueId(), container.getLocation(), item, price);
+        Block signBlock = target.getRelative(player.getFacing().getOppositeFace());
+        if (signBlock.getType() != Material.AIR) {
+            locale.sendMessage(player, "command-create-invalid-sign");
+            return;
+        }
 
-        if (type != null)
-            shop.setType(type);
+        item.setAmount(1);
+
+        Shop shop = new Shop(player.getUniqueId(), container.getLocation(), item, price);
+        shop.setSignDirection(player.getFacing().getOppositeFace());
+        shop.setType(type == null ? ShopType.SELLING : type);
+        shop.setOfflineOwner(player);
 
         if (shop.create(player)) {
             locale.sendMessage(player, "command-create-success", shop.getPlaceholders());

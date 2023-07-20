@@ -7,6 +7,7 @@ import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.rosegarden.manager.Manager;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.Container;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.type.WallSign;
@@ -77,12 +78,14 @@ public class ShopManager extends Manager {
         String type = data.get(ShopDataKeys.SHOP_TYPE, PersistentDataType.STRING);
         ItemStack item = ShopUtils.deserializeItem(data.get(ShopDataKeys.SHOP_ITEM, PersistentDataType.BYTE_ARRAY));
         Double price = data.get(ShopDataKeys.SHOP_PRICE, PersistentDataType.DOUBLE);
+        String signDirection = data.get(ShopDataKeys.SHOP_SIGN, PersistentDataType.STRING);
 
-        if (owner == null || type == null || item == null || price == null)
+        if (owner == null || type == null || item == null || price == null || signDirection == null)
             return null;
 
         Shop shop = new Shop(UUID.fromString(owner), container.getLocation(), item, price);
         shop.setType(ShopUtils.getEnum(ShopType.class, type));
+        shop.setSignDirection(ShopUtils.getEnum(BlockFace.class, signDirection));
 
         this.cachedShops.put(container.getLocation(), shop);
         return shop;

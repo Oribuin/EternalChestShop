@@ -38,7 +38,7 @@ public class Shop {
     private double price; // Price of the item
     private @NotNull ShopType type;  // Type of shop, buying or selling
     private @NotNull OfflinePlayer offlineOwner; // Name of the shop owner, used for display purposes
-    private @Nullable Sign attached; // The sign attached to the shop
+    private BlockFace signDirection; // The direction the sign is facing
 
     public Shop(@NotNull UUID owner, @NotNull Location location, @NotNull ItemStack item, double price) {
         this.owner = owner;
@@ -47,7 +47,7 @@ public class Shop {
         this.price = Math.max(price, 0);
         this.type = ShopType.SELLING;
         this.offlineOwner = Bukkit.getOfflinePlayer(owner);
-        this.attached = this.getAttached();
+        this.signDirection = null;
     }
 
     /**
@@ -262,6 +262,7 @@ public class Shop {
         data.set(ShopDataKeys.SHOP_ITEM, PersistentDataType.BYTE_ARRAY, ShopUtils.serializeItem(this.item));
         data.set(ShopDataKeys.SHOP_PRICE, PersistentDataType.DOUBLE, this.price);
         data.set(ShopDataKeys.SHOP_OWNER_NAME, PersistentDataType.STRING, Objects.requireNonNullElse(this.offlineOwner.getName(), "Unknown"));
+        data.set(ShopDataKeys.SHOP_SIGN, PersistentDataType.STRING, this.signDirection.name());
 
         container.update();
 
@@ -301,13 +302,15 @@ public class Shop {
         data.remove(ShopDataKeys.SHOP_ITEM);
         data.remove(ShopDataKeys.SHOP_PRICE);
         data.remove(ShopDataKeys.SHOP_OWNER_NAME);
+        data.remove(ShopDataKeys.SHOP_SIGN);
         container.update();
 
         // Remove the sign attached to the shop
         Sign attached = this.getAttached();
         if (attached != null) {
             attached.getBlock().setType(Material.AIR);
-            this.attached = null;
+
+            this.signDirection = null;
         }
 
         EternalChestShops.getInstance().getManager(ShopManager.class).getCachedShop().remove(this.location);
@@ -315,29 +318,32 @@ public class Shop {
 
     @Nullable
     public Sign getAttached() {
-        if (this.attached != null)
-            return this.attached;
+        if (this.signDirection == null)
+            this.signDirection = ShopUtils.getEnum(BlockFace.class, ((Container) this.location.getBlock().getState())
+                    .getPersistentDataContainer()
+                    .get(ShopDataKeys.SHOP_SIGN, PersistentDataType.STRING)
+            );
 
-        List<BlockFace> allowed = List.of(BlockFace.NORTH,
-                BlockFace.EAST,
-                BlockFace.SOUTH,
-                BlockFace.WEST
-        );
+        // If there is no sign direction, return null and remove the shop
+        if (this.signDirection == null) {
+            this.remove();
+            return null;
+        }
 
-        // TODO (Consider) | Improve this system for finding the sign attached to the shop
-        this.attached = allowed.stream()
-                .map(f -> this.location.getBlock().getRelative(f))
-                .filter(b ->
-                        b.getState() instanceof Sign sign
-                                && sign.getPersistentDataContainer().has(ShopDataKeys.SHOP_SIGN, PersistentDataType.INTEGER)
-                                && sign.getPersistentDataContainer().has(ShopDataKeys.SHOP_OWNER, PersistentDataType.STRING)
-                                && Objects.equals(sign.getPersistentDataContainer().get(ShopDataKeys.SHOP_OWNER, PersistentDataType.STRING), this.owner.toString())
-                )
-                .map(b -> (Sign) b.getState())
-                .findFirst()
-                .orElse(null);
+        Block signBlock = this.location.getBlock().getRelative(this.signDirection);
+        if (!(signBlock.getState() instanceof Sign sign))
+            return null;
 
-        return this.attached;
+        Integer shopId = sign.getPersistentDataContainer().get(ShopDataKeys.SHOP_SIGN, PersistentDataType.INTEGER);
+        String shopOwner = sign.getPersistentDataContainer().get(ShopDataKeys.SHOP_OWNER, PersistentDataType.STRING);
+
+        if (shopId == null || !shopId.equals(1))
+            return null;
+
+        if (shopOwner == null || !shopOwner.equals(this.owner.toString()))
+            return null;
+
+        return sign;
     }
 
     /**
@@ -415,6 +421,14 @@ public class Shop {
 
     public void setOfflineOwner(@NotNull OfflinePlayer offlineOwner) {
         this.offlineOwner = offlineOwner;
+    }
+
+    public BlockFace getSignDirection() {
+        return signDirection;
+    }
+
+    public void setSignDirection(BlockFace signDirection) {
+        this.signDirection = signDirection;
     }
 
 }
