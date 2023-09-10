@@ -22,6 +22,9 @@ public class ConfigurationManager extends AbstractConfigurationManager {
 
     public enum Setting implements RoseSetting {
 
+        BUYING_TAX("buying-tax", 20, "The tax for buying items from a shop as a percentage"),
+        SELLING_TAX("selling-tax", 20, "The tax for selling items to a shop as a percentage"),
+
         // Signs
         SIGN_SETTINGS("sign-settings", null, "Modify the text for the signs here."),
         SIGN_SETTINGS_MATERIAL("sign-settings.material", Material.OAK_WALL_SIGN.name(), "The material for the signs.", "This sign must be a wall sign."),

@@ -1,10 +1,6 @@
 package xyz.oribuin.chestshops.util;
 
-import dev.rosewood.rosegarden.RosePlugin;
 import org.apache.commons.lang3.StringUtils;
-import org.bukkit.Bukkit;
-import org.bukkit.Color;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -13,16 +9,11 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.util.io.BukkitObjectInputStream;
 import org.bukkit.util.io.BukkitObjectOutputStream;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.util.List;
 
@@ -33,69 +24,6 @@ public final class ShopUtils {
     }
 
     /**
-     * Convert a location to the center of the block
-     *
-     * @param location The location to convert
-     * @return The center of the block
-     */
-    public static Location center(Location location) {
-        final Location loc = location.getBlock().getLocation().clone();
-        loc.add(0.5, 0.5, 0.5);
-        loc.setYaw(180f);
-        loc.setPitch(0f);
-        return loc;
-    }
-
-    /**
-     * Get a bukkit color from a hex code
-     *
-     * @param hex The hex code
-     * @return The bukkit color
-     */
-    public static Color fromHex(String hex) {
-        if (hex == null)
-            return Color.BLACK;
-
-        java.awt.Color awtColor;
-        try {
-            awtColor = java.awt.Color.decode(hex);
-        } catch (NumberFormatException e) {
-            return Color.BLACK;
-        }
-
-        return Color.fromRGB(awtColor.getRed(), awtColor.getGreen(), awtColor.getBlue());
-    }
-
-    /**
-     * Gets a location as a string key
-     *
-     * @param location The location
-     * @return the location as a string key
-     * @author Esophose
-     */
-    public static String locationAsKey(Location location) {
-        return String.format("%s;%.2f;%.2f;%.2f", location.getWorld().getName(), location.getX(), location.getY(), location.getZ());
-    }
-
-    /**
-     * Get a location from a string key
-     *
-     * @param key The key
-     * @return The location
-     */
-    public static Location locationFromKey(String key) {
-        if (key == null || key.isEmpty())
-            return null;
-
-        // format is world;x;y;z
-        final String[] split = key.split(";");
-        if (split.length != 4)
-            return null;
-
-        return new Location(Bukkit.getWorld(split[0]), Double.parseDouble(split[1]), Double.parseDouble(split[2]), Double.parseDouble(split[3]));
-    }
-
-    /**
      * Format a material name through this long method
      *
      * @param material The material
@@ -103,23 +31,6 @@ public final class ShopUtils {
      */
     public static String format(Material material) {
         return StringUtils.capitalize(material.name().toLowerCase().replace("_", " "));
-    }
-
-    /**
-     * Parse an integer from an object safely
-     *
-     * @param object The object
-     * @return The integer
-     */
-    private static int parseInteger(Object object) {
-        try {
-            if (object instanceof Integer)
-                return (int) object;
-
-            return Integer.parseInt(object.toString());
-        } catch (NumberFormatException e) {
-            return 0;
-        }
     }
 
     /**
@@ -170,66 +81,6 @@ public final class ShopUtils {
         }
 
         return itemStack;
-    }
-
-    /**
-     * Create a file from the plugin's resources
-     *
-     * @param rosePlugin The plugin
-     * @param fileName   The file name
-     * @return The file
-     */
-    @NotNull
-    public static File createFile(@NotNull RosePlugin rosePlugin, @NotNull String fileName) {
-        File file = new File(rosePlugin.getDataFolder(), fileName); // Create the file
-
-        if (file.exists())
-            return file;
-
-        try (InputStream inStream = rosePlugin.getResource(fileName)) {
-            if (inStream == null) {
-                file.createNewFile();
-                return file;
-            }
-
-            Files.copy(inStream, Paths.get(file.getAbsolutePath()));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return file;
-    }
-
-    /**
-     * Create a file in a folder from the plugin's resources
-     *
-     * @param rosePlugin The plugin
-     * @param folderName The folder name
-     * @param fileName   The file name
-     * @return The file
-     */
-    @NotNull
-    public static File createFile(@NotNull RosePlugin rosePlugin, @NotNull String folderName, @NotNull String fileName) {
-        File folder = new File(rosePlugin.getDataFolder(), folderName); // Create the folder
-        File file = new File(folder, fileName); // Create the file
-        if (!folder.exists())
-            folder.mkdirs();
-
-        if (file.exists())
-            return file;
-
-        try (InputStream stream = rosePlugin.getResource(folderName + "/" + fileName)) {
-            if (stream == null) {
-                file.createNewFile();
-                return file;
-            }
-
-            Files.copy(stream, Paths.get(file.getAbsolutePath()));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return file;
     }
 
     /**

@@ -99,7 +99,7 @@ public class Shop {
 
         // Take the money from the player and give it to the shop owner
         provider.take(who, totalCost);
-        provider.give(this.offlineOwner, totalCost);
+        provider.give(this.offlineOwner, totalCost * (1 - Setting.BUYING_TAX.getDouble()));
 
         // Take each item in individual stacks and add them to the player's inventory
         int totalStacks = (int) Math.ceil(totalItems / 64D);
@@ -175,7 +175,7 @@ public class Shop {
         }
 
         provider.take(this.offlineOwner, totalCost);
-        provider.give(who, totalCost);
+        provider.give(who, totalCost * (1 - Setting.SELLING_TAX.getDouble()));
 
         // Take each item in individual stacks and add them to the player's inventory
         int totalStacks = (int) Math.ceil(itemsToSell / 64D);
