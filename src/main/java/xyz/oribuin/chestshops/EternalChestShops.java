@@ -4,6 +4,8 @@ import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.rosegarden.manager.Manager;
 import org.bukkit.plugin.PluginManager;
 import xyz.oribuin.chestshops.listener.BlockListeners;
+import xyz.oribuin.chestshops.listener.ChunkListeners;
+import xyz.oribuin.chestshops.listener.InventoryListener;
 import xyz.oribuin.chestshops.manager.CommandManager;
 import xyz.oribuin.chestshops.manager.ConfigurationManager;
 import xyz.oribuin.chestshops.manager.LocaleManager;
@@ -27,11 +29,11 @@ public class EternalChestShops extends RosePlugin {
 
     @Override
     protected void enable() {
-
         // Register Listeners
         PluginManager pluginManager = this.getServer().getPluginManager();
         pluginManager.registerEvents(new BlockListeners(this), this);
-
+        pluginManager.registerEvents(new ChunkListeners(this), this);
+        pluginManager.registerEvents(new InventoryListener(), this);
     }
 
     @Override

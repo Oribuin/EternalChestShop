@@ -47,7 +47,7 @@ public class BuyCommand extends RoseCommand {
             return;
         }
 
-        shop.buy(player, amount);
+        shop.buyFromShop(player, amount);
     }
 
     @Override

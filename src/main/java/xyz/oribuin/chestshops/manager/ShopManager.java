@@ -17,7 +17,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import xyz.oribuin.chestshops.model.Shop;
 import xyz.oribuin.chestshops.model.ShopDataKeys;
-import xyz.oribuin.chestshops.model.ShopType;
+import xyz.oribuin.chestshops.model.ShopResponse;
 import xyz.oribuin.chestshops.util.ShopUtils;
 
 import java.util.HashMap;
@@ -30,7 +30,7 @@ public class ShopManager extends Manager {
 
     private final Set<UUID> bypassing = Sets.newConcurrentHashSet();
     private final Map<Location, Shop> cachedShops = new HashMap<>();
-    private final Cache<UUID, Shop> awaitingResponse = CacheBuilder.newBuilder()
+    private final Cache<UUID, ShopResponse> awaitingResponse = CacheBuilder.newBuilder()
             .expireAfterWrite(60, TimeUnit.SECONDS)
             .build();
 
@@ -75,17 +75,19 @@ public class ShopManager extends Manager {
 
         // Load the shop data
         String owner = data.get(ShopDataKeys.SHOP_OWNER, PersistentDataType.STRING);
-        String type = data.get(ShopDataKeys.SHOP_TYPE, PersistentDataType.STRING);
         ItemStack item = ShopUtils.deserializeItem(data.get(ShopDataKeys.SHOP_ITEM, PersistentDataType.BYTE_ARRAY));
-        Double price = data.get(ShopDataKeys.SHOP_PRICE, PersistentDataType.DOUBLE);
+        Double buyPrice = data.get(ShopDataKeys.SHOP_BUYPRICE, PersistentDataType.DOUBLE);
+        Double sellPrice = data.get(ShopDataKeys.SHOP_SELLPRICE, PersistentDataType.DOUBLE);
         String signDirection = data.get(ShopDataKeys.SHOP_SIGN, PersistentDataType.STRING);
 
-        if (owner == null || type == null || item == null || price == null || signDirection == null)
-            return null;
+        // Check if the data is valid
+        if (owner == null || item == null || signDirection == null) return null;
+        if (sellPrice == null && buyPrice == null) return null;
 
-        Shop shop = new Shop(UUID.fromString(owner), container.getLocation(), item, price);
-        shop.setType(ShopUtils.getEnum(ShopType.class, type));
+        Shop shop = new Shop(UUID.fromString(owner), container.getLocation(), item);
         shop.setSignDirection(ShopUtils.getEnum(BlockFace.class, signDirection));
+        shop.setBuyPrice(buyPrice != null ? buyPrice : 0);
+        shop.setSellPrice(sellPrice != null ? sellPrice : 0);
 
         this.cachedShops.put(container.getLocation(), shop);
         return shop;
@@ -189,7 +191,7 @@ public class ShopManager extends Manager {
         return cachedShops;
     }
 
-    public Cache<UUID, Shop> getAwaitingResponse() {
+    public Cache<UUID, ShopResponse> getAwaitingResponse() {
         return this.awaitingResponse;
     }
 

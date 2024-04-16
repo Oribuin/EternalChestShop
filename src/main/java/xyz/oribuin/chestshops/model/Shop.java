@@ -28,24 +28,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class Shop {
 
     private final @NotNull UUID owner; // UUID of the shop owner
     private final @NotNull Location location; // Location of the shop
     private final @NotNull ItemStack item; // Item being sold or bought
-    private double price; // Price of the item
-    private @NotNull ShopType type;  // Type of shop, buying or selling
+    private double buyPrice; // Price of the item
+    private double sellPrice; // Price of the item
     private @NotNull OfflinePlayer offlineOwner; // Name of the shop owner, used for display purposes
     private BlockFace signDirection; // The direction the sign is facing
 
-    public Shop(@NotNull UUID owner, @NotNull Location location, @NotNull ItemStack item, double price) {
+    public Shop(@NotNull UUID owner, @NotNull Location location, @NotNull ItemStack item) {
         this.owner = owner;
         this.location = location;
         this.item = item;
-        this.price = Math.max(price, 0);
-        this.type = ShopType.SELLING;
+        this.buyPrice = 0;
+        this.sellPrice = 0;
         this.offlineOwner = Bukkit.getOfflinePlayer(owner);
         this.signDirection = null;
     }
@@ -56,16 +55,16 @@ public class Shop {
      * @param who    The player buying the items
      * @param amount The amount of items to buy
      */
-    public void buy(Player who, int amount) {
+    public void buyFromShop(Player who, int amount) {
         LocaleManager locale = EternalChestShops.getInstance().getManager(LocaleManager.class);
 
-        if (this.type != ShopType.SELLING || !(this.location.getBlock().getState() instanceof Container container) || price <= 0) {
+        if (this.buyPrice <= 0 || !(this.location.getBlock().getState() instanceof Container container)) {
             locale.sendMessage(who, "command-buy-invalid-shop");
             return;
         }
 
         int totalItems = Math.min(this.getStock(), amount);
-        int totalCost = (int) (this.price * totalItems);
+        int totalCost = (int) (this.buyPrice * totalItems);
         int stock = this.getStock();
 
         // Check if the shop has enough items to sell
@@ -135,16 +134,16 @@ public class Shop {
      * @param who    The player selling the items
      * @param amount The amount of items to sell
      */
-    public void sell(Player who, int amount) {
+    public void sellToShop(Player who, int amount) {
         LocaleManager locale = EternalChestShops.getInstance().getManager(LocaleManager.class);
 
-        if (this.type != ShopType.BUYING || !(this.location.getBlock().getState() instanceof Container container) || price <= 0) {
+        if (this.sellPrice <= 0 || !(this.location.getBlock().getState() instanceof Container container)) {
             locale.sendMessage(who, "command-sell-invalid-shop");
             return;
         }
 
         int itemsToSell = Math.min(ShopUtils.getAmountOfItem(who.getInventory(), this.item), amount);
-        int totalCost = (int) (this.price * itemsToSell);
+        int totalCost = (int) (this.buyPrice * itemsToSell);
 
         // Player does not have enough items to sell
         if (itemsToSell <= 0) {
@@ -258,9 +257,9 @@ public class Shop {
 
         PersistentDataContainer data = container.getPersistentDataContainer();
         data.set(ShopDataKeys.SHOP_OWNER, PersistentDataType.STRING, this.owner.toString());
-        data.set(ShopDataKeys.SHOP_TYPE, PersistentDataType.STRING, this.type.name());
         data.set(ShopDataKeys.SHOP_ITEM, PersistentDataType.BYTE_ARRAY, ShopUtils.serializeItem(this.item));
-        data.set(ShopDataKeys.SHOP_PRICE, PersistentDataType.DOUBLE, this.price);
+        data.set(ShopDataKeys.SHOP_BUYPRICE, PersistentDataType.DOUBLE, this.buyPrice);
+        data.set(ShopDataKeys.SHOP_SELLPRICE, PersistentDataType.DOUBLE, this.sellPrice);
         data.set(ShopDataKeys.SHOP_OWNER_NAME, PersistentDataType.STRING, Objects.requireNonNullElse(this.offlineOwner.getName(), "Unknown"));
         data.set(ShopDataKeys.SHOP_SIGN, PersistentDataType.STRING, this.signDirection.name());
 
@@ -269,24 +268,32 @@ public class Shop {
         // Get connecting sign and update it
         Sign attachedSign = this.getAttached();
         if (attachedSign != null) {
-            List<String> lines = new ArrayList<>(this.type == ShopType.SELLING
-                    ? Setting.SIGN_TEXT_SETTINGS_SELLING.getStringList()
-                    : Setting.SIGN_TEXT_SETTINGS_BUYING.getStringList()
-            );
-
-            LocaleManager locale = EternalChestShops.getInstance().getManager(LocaleManager.class);
-            lines = lines.stream()
-                    .map(s -> locale.format(null, s, this.getPlaceholders()))
-                    .collect(Collectors.toList());
-
-            for (int i = 0; i < lines.size(); i++)
-                attachedSign.setLine(i, lines.get(i));
-
-            attachedSign.update();
+            this.updateSign();
         }
 
         // Update the shop in the cache
         EternalChestShops.getInstance().getManager(ShopManager.class).getCachedShop().put(this.location, this);
+    }
+
+    /**
+     * Update the sign text on the shop sign
+     */
+    public void updateSign() {
+        Sign attachedSign = this.getAttached();
+        if (attachedSign == null)
+            return;
+
+        List<String> lines = new ArrayList<>(Setting.SIGN_SETTINGS_TEXT.getStringList());
+
+        LocaleManager locale = EternalChestShops.getInstance().getManager(LocaleManager.class);
+        lines = lines.stream()
+                .map(s -> locale.format(null, s, this.getPlaceholders()))
+                .toList();
+
+        for (int i = 0; i < lines.size(); i++)
+            attachedSign.setLine(i, lines.get(i));
+
+        attachedSign.update();
     }
 
     /**
@@ -298,9 +305,9 @@ public class Shop {
 
         PersistentDataContainer data = container.getPersistentDataContainer();
         data.remove(ShopDataKeys.SHOP_OWNER);
-        data.remove(ShopDataKeys.SHOP_TYPE);
         data.remove(ShopDataKeys.SHOP_ITEM);
-        data.remove(ShopDataKeys.SHOP_PRICE);
+        data.remove(ShopDataKeys.SHOP_BUYPRICE);
+        data.remove(ShopDataKeys.SHOP_SELLPRICE);
         data.remove(ShopDataKeys.SHOP_OWNER_NAME);
         data.remove(ShopDataKeys.SHOP_SIGN);
         container.update();
@@ -378,12 +385,14 @@ public class Shop {
     public StringPlaceholders getPlaceholders() {
         return StringPlaceholders.builder()
                 .add("owner", Objects.requireNonNullElse(this.offlineOwner.getName(), "Unknown"))
-                .add("price", this.price)
-                .add("price_short", ShopUtils.formatShorthand(this.price))
+                .add("buy_price", this.buyPrice)
+                .add("buy_short", ShopUtils.formatShorthand(this.buyPrice))
+                .add("sell_price", this.sellPrice)
+                .add("sell_short", ShopUtils.formatShorthand(this.sellPrice))
                 .add("item", ShopUtils.getItemName(this.item))
-                .add("type", this.type.name().toLowerCase())
                 .add("stock", this.getStock())
                 .add("space", this.getSpace())
+                .add("location", String.format("%s, %s, %s", this.location.getBlockX(), this.location.getBlockY(), this.location.getBlockZ()))
                 .build();
     }
 
@@ -399,20 +408,20 @@ public class Shop {
         return item;
     }
 
-    public double getPrice() {
-        return price;
+    public double getBuyPrice() {
+        return buyPrice;
     }
 
-    public void setPrice(double price) {
-        this.price = price;
+    public void setBuyPrice(double buyPrice) {
+        this.buyPrice = buyPrice;
     }
 
-    public @NotNull ShopType getType() {
-        return type;
+    public double getSellPrice() {
+        return sellPrice;
     }
 
-    public void setType(@NotNull ShopType type) {
-        this.type = type;
+    public void setSellPrice(double sellPrice) {
+        this.sellPrice = sellPrice;
     }
 
     public @NotNull OfflinePlayer getOfflineOwner() {

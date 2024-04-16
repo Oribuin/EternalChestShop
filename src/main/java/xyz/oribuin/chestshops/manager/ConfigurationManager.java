@@ -28,18 +28,12 @@ public class ConfigurationManager extends AbstractConfigurationManager {
         // Signs
         SIGN_SETTINGS("sign-settings", null, "Modify the text for the signs here."),
         SIGN_SETTINGS_MATERIAL("sign-settings.material", Material.OAK_WALL_SIGN.name(), "The material for the signs.", "This sign must be a wall sign."),
-        SIGN_TEXT_SETTINGS_BUYING("sign-settings.buying", List.of(
-                "&f%owner%",
-                "&f%item%",
-                "&#00B4DB&lBuying: &f%space%",
-                "&f$#00B4DB&l%price_short% &fEach"
-        ), "The text for the buying sign."),
-        SIGN_TEXT_SETTINGS_SELLING("sign-settings.selling", List.of(
-                "&f%owner%",
-                "&f%item%",
-                "&#00B4DB&lSelling: &f%stock%",
-                "&f$#00B4DB&l%price_short% &fEach"
-        ), "The text for the selling sign.");
+        SIGN_SETTINGS_TEXT("sign-settings.text", List.of(
+                "<#00B4DB>&l%owner%",
+                "<#00B4DB>&l%item%",
+                "<#00B4DB>Buy &f| <#00B4DB>Sell",
+                "<#00B4DB>%buy_short% &f| <#00B4DB>%sell_short%"
+        ), "The text for the sign.");
 
         private final String key;
         private final Object defaultValue;

@@ -36,6 +36,24 @@ public class LocaleManager extends AbstractLocaleManager {
     }
 
     /**
+     * Send a message to a CommandSender without a prefix
+     *
+     * @param sender       The CommandSender to send the message to
+     * @param messageKey   The message key to send
+     * @param placeholders The placeholders to apply to the message
+     */
+    public void sendCustomMessages(CommandSender sender, String messageKey, StringPlaceholders placeholders) {
+        List<String> messages = this.getLocaleMessages(messageKey, placeholders);
+
+        if (messages.isEmpty() || messages.stream().allMatch(String::isEmpty))
+            return;
+
+        for (String message : messages) {
+            this.sendParsedMessage(sender, message);
+        }
+    }
+
+    /**
      * Get a string list from a locale key
      *
      * @param messageKey The key to get the message from

@@ -5,64 +5,61 @@ import dev.rosewood.rosegarden.command.framework.CommandContext;
 import dev.rosewood.rosegarden.command.framework.RoseCommand;
 import dev.rosewood.rosegarden.command.framework.RoseCommandWrapper;
 import dev.rosewood.rosegarden.command.framework.annotation.RoseExecutable;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import xyz.oribuin.chestshops.manager.LocaleManager;
 import xyz.oribuin.chestshops.manager.ShopManager;
 import xyz.oribuin.chestshops.model.Shop;
+import xyz.oribuin.chestshops.model.ShopType;
+import xyz.oribuin.chestshops.model.gui.PreviewHolder;
 
-public class SellCommand extends RoseCommand {
+public class PreviewCommand extends RoseCommand {
 
-    public SellCommand(RosePlugin rosePlugin, RoseCommandWrapper parent) {
+    public PreviewCommand(RosePlugin rosePlugin, RoseCommandWrapper parent) {
         super(rosePlugin, parent);
     }
 
     @RoseExecutable
-    public void execute(CommandContext context, int amount) {
+    public void execute(CommandContext context) {
         if (!(context.getSender() instanceof Player player))
             return;
 
         LocaleManager locale = this.rosePlugin.getManager(LocaleManager.class);
 
         Block target = player.getTargetBlockExact(5);
-        if (target == null) {
-            locale.sendMessage(player, "command-sell-invalid-block");
+        if (target == null || !(target.getState() instanceof Container)) {
+            locale.sendMessage(player, "command-preview-invalid-shop");
             return;
         }
 
+        // Modify the existing prices if the shop already exists
         Shop shop = this.rosePlugin.getManager(ShopManager.class).getShop(target);
-
-        if (amount < 1) {
-            locale.sendMessage(player, "command-sell-invalid-amount");
-            return;
-        }
-
         if (shop == null) {
-            locale.sendMessage(player, "command-sell-invalid-shop");
+            locale.sendMessage(player, "command-preview-invalid-shop");
             return;
         }
 
-        if (shop.getOwner().equals(player.getUniqueId())) {
-            locale.sendMessage(player, "command-sell-is-owner");
-            return;
-        }
+        PreviewHolder previewHolder = new PreviewHolder(shop.getItem());
+        previewHolder.open(player);
 
-        shop.sellToShop(player, amount);
     }
 
     @Override
     protected String getDefaultName() {
-        return "sell";
+        return "preview";
     }
 
     @Override
     public String getDescriptionKey() {
-        return "command-sell-description";
+        return "command-preview-description";
     }
 
     @Override
     public String getRequiredPermission() {
-        return "eternalchestshops.sell";
+        return "eternalchestshops.preview";
     }
 
     @Override

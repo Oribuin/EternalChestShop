@@ -19,6 +19,7 @@ permissions:
       - eternalchestshops.buy
       - eternalchestshops.sell
       - eternalchestshops.reload
+      - eternalchestshops.preview
   eternalchestshops.bypass:
     default: op
     description: Allows the player to bypass chest shop protections.
@@ -37,3 +38,6 @@ permissions:
   eternalchestshops.reload:
     default: op
     description: Allows the player to reload the plugin with a command.
+  eternalchestshops.preview:
+    default: op
+    description: Allows the player to preview the item in a chest shop with a command.

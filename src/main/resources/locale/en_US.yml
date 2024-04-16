@@ -12,7 +12,6 @@ invalid-argument-null: 'Invalid argument: %name% was null.'
 missing-arguments: 'Missing arguments, &b%amount% &frequired.'
 missing-arguments-extra: 'Missing arguments, &b%amount%+ &frequired.'
 
-
 # Base Command Message
 base-command-color: '#00B4DB'
 base-command-help: '&fUse #00B4DB/%cmd% help &ffor command information.'
@@ -29,7 +28,7 @@ command-reload-reloaded: 'Configuration and locale files were reloaded'
 
 # Buy Command
 command-buy-description: 'Buy items from a shop'
-command-buy-input: 'Please input the amount of items you would like to buy.'
+command-buy-input: 'This shop has a total of #00B4DB%stock% &favailable for purchase. How many would you like to buy?'
 command-buy-success: 'You have successfully purchased #00B4DB%amount% %item% &ffrom #00B4DB%owner%&f.'
 command-buy-invalid-shop: 'The shop you''re trying to buy from is invalid.'
 command-buy-not-enough-items: 'The shop you''re trying to buy doesnt have that many items.'
@@ -42,10 +41,12 @@ command-buy-empty: 'The shop you''re trying to buy from is empty.'
 command-bypass-description: 'Bypass a chest shop protection'
 command-bypass-enabled: 'You are now bypassing chest shop protections.'
 command-bypass-disabled: 'You are no longer bypassing chest shop protections.'
+command-bypass-used: 'You have bypassed chest protection for this shop.'
 
 # Create Command
 command-create-description: 'Create a new chest shop'
 command-create-success: 'You have successfully created a chest shop.'
+command-create-modified: 'You have successfully modified the chest shop.'
 command-create-invalid-item: 'You must be holding an item to create a chest shop.'
 command-create-invalid-block: 'You must be looking at a container to create a chest shop.'
 command-create-invalid-sign: 'There must be an empty sign infront of the shop.'
@@ -59,7 +60,7 @@ command-remove-not-owner: 'You are not the owner of this chest shop.'
 
 # Sell Command
 command-sell-description: 'Sell items to a shop'
-command-sell-input: 'Please input the amount of items you would like to sell.'
+command-sell-input: 'This shop can buy another #00B4DB%space% &fitems in the shop. How many would you like to sell?'
 command-sell-success: 'You have successfully sold #00B4DB%amount% %item% &fto #00B4DB%owner%&f.'
 command-sell-invalid-shop: 'The shop you''re trying to sell to is invalid.'
 command-sell-not-enough-items: 'You dont have that many items to sell.'
@@ -67,6 +68,24 @@ command-sell-not-enough-space: 'The shop you''re trying to sell cannot fit this 
 command-sell-not-enough-money: 'The shop you''re trying to sell to doesnt have enough money.'
 command-sell-is-owner: 'You cannot sell to your own shop.'
 command-sell-full: 'The shop you''re trying to sell to is full.'
+
+# Preview Command
+command-preview-description: 'Preview the item in a chest shop'
+command-preview-invalid-shop: 'You must be looking at a chest shop to preview the item.'
+
+# Stats Page
+command-stats-description: 'View the stats of a chest shop'
+command-stats-invalid-block: 'You must be looking at a chest shop to view its stats.'
+command-stats-list:
+  - '#00B4DB&lChest Shop &7/ %location%'
+  - ' &7&l| &fOwner: #00B4DB%owner%'
+  - ' &7&l| &fItem: #00B4DB%item%'
+  - ' &7&l| &fBuy Price: #00B4DB%buy_price%'
+  - ' &7&l| &fSell Price: #00B4DB%sell_price%'
+  - ' &7&l| &fStock: #00B4DB%stock%'
+  - ' &7&l| &fSpace: #00B4DB%space%'
+  - ' &7&l|'
+  - ' &7&l| &fType #00B4DB/cshop preview &fto preview the item'
 
 # Error Messages
 argument-handler-shop-type: 'Please specify a valid shop type. [Selling/Buying]'

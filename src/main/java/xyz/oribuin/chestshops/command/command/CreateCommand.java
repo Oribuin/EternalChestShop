@@ -4,11 +4,9 @@ import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.rosegarden.command.framework.CommandContext;
 import dev.rosewood.rosegarden.command.framework.RoseCommand;
 import dev.rosewood.rosegarden.command.framework.RoseCommandWrapper;
-import dev.rosewood.rosegarden.command.framework.annotation.Optional;
 import dev.rosewood.rosegarden.command.framework.annotation.RoseExecutable;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -24,7 +22,7 @@ public class CreateCommand extends RoseCommand {
     }
 
     @RoseExecutable
-    public void execute(CommandContext context, Double price, @Optional ShopType type) {
+    public void execute(CommandContext context, ShopType type, Double price) {
         if (!(context.getSender() instanceof Player player))
             return;
 
@@ -42,23 +40,40 @@ public class CreateCommand extends RoseCommand {
             return;
         }
 
+        // Modify the existing prices if the shop already exists
+        Shop shop = this.rosePlugin.getManager(ShopManager.class).getShop(target);
+        if (shop != null) {
+
+            switch (type) {
+                case BUYING -> shop.setBuyPrice(price);
+                case SELLING -> shop.setSellPrice(price);
+            }
+
+            shop.update();
+            locale.sendMessage(player, "command-create-modified", shop.getPlaceholders());
+            return;
+        }
+
         Block signBlock = target.getRelative(player.getFacing().getOppositeFace());
         if (signBlock.getType() != Material.AIR) {
             locale.sendMessage(player, "command-create-invalid-sign");
             return;
         }
 
-        if (this.rosePlugin.getManager(ShopManager.class).isShop(target)) {
-            locale.sendMessage(player, "command-create-already-shop");
-            return;
+        // Create a brand new shop here if the shop is null
+        item.setAmount(1);
+        shop = new Shop(player.getUniqueId(), container.getLocation(), item);
+        shop.setSignDirection(player.getFacing().getOppositeFace());
+        shop.setOfflineOwner(player);
+        switch (type) {
+            case BUYING -> shop.setBuyPrice(price);
+            case SELLING -> shop.setSellPrice(price);
         }
 
-        item.setAmount(1);
-
-        Shop shop = new Shop(player.getUniqueId(), container.getLocation(), item, price);
-        shop.setSignDirection(player.getFacing().getOppositeFace());
-        shop.setType(type == null ? ShopType.SELLING : type);
-        shop.setOfflineOwner(player);
+        if (shop.getBuyPrice() == 0 && shop.getSellPrice() == 0) {
+            locale.sendMessage(player, "command-create-invalid-price");
+            return;
+        }
 
         if (shop.create(player)) {
             locale.sendMessage(player, "command-create-success", shop.getPlaceholders());

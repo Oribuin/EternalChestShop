@@ -2,6 +2,7 @@ package xyz.oribuin.chestshops.listener;
 
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
@@ -16,6 +17,7 @@ import xyz.oribuin.chestshops.EternalChestShops;
 import xyz.oribuin.chestshops.manager.LocaleManager;
 import xyz.oribuin.chestshops.manager.ShopManager;
 import xyz.oribuin.chestshops.model.Shop;
+import xyz.oribuin.chestshops.model.ShopResponse;
 import xyz.oribuin.chestshops.model.ShopType;
 
 @SuppressWarnings("deprecation")
@@ -31,12 +33,19 @@ public class BlockListeners implements Listener {
         this.manager = this.plugin.getManager(ShopManager.class);
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onShopBreak(BlockBreakEvent event) {
-        if (!(event.getBlock().getState() instanceof Container container))
-            return;
+        BlockState state = event.getBlock().getState();
+        Shop shop = null;
 
-        Shop shop = this.manager.getShop(container);
+        // Check if the block is a container
+        if (state instanceof Container container)
+            shop = this.manager.getShop(container);
+
+        // Check if the block is a sign
+        if (state instanceof Sign sign)
+            shop = this.manager.getShop(sign);
+
         if (shop == null) return;
 
         event.setCancelled(true);
@@ -53,89 +62,73 @@ public class BlockListeners implements Listener {
         this.locale.sendMessage(event.getPlayer(), "command-remove-success");
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
-    public void onSignBreak(BlockBreakEvent event) {
-        if (!(event.getBlock().getState() instanceof Sign sign))
-            return;
-
-        ShopManager manager = this.manager;
-        Shop shop = manager.getShop(sign);
-        if (shop == null) return;
-
-        // no break if not owner
-        if (!event.getPlayer().getUniqueId().equals(shop.getOwner()) || !event.getPlayer().isSneaking() && !manager.isBypassing(event.getPlayer().getUniqueId())) {
-            event.setCancelled(true);
-            return;
-        }
-
-        // Cancel the event.
-        event.setCancelled(true);
-
-        // Remove the shop
-        shop.remove();
-        this.locale.sendMessage(event.getPlayer(), "command-remove-success");
-    }
-
-    @EventHandler
-    public void onSignInteract(PlayerInteractEvent event) {
-        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    public void onBuy(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK && event.getAction() != Action.LEFT_CLICK_BLOCK) return;
+        if (event.getClickedBlock() == null) return;
         if (!(event.getClickedBlock().getState() instanceof Sign sign)) return;
 
-        ShopManager manager = this.manager;
-        Shop shop = manager.getShop(sign);
+        Shop shop = this.manager.getShop(sign);
         if (shop == null) return;
 
         // Update the shop
         shop.update();
         event.setCancelled(true);
-    }
 
-    @EventHandler
-    public void onBuy(PlayerInteractEvent event) {
-        Block block = event.getClickedBlock();
-        if (block == null) return;
-
-        ShopManager manager = this.manager;
-        Shop shop = manager.getShop(block);
-        if (shop == null) return;
-
-        // Update the shop
-        shop.update();
-
-        if (event.getAction() != Action.LEFT_CLICK_BLOCK) return;
-        event.setCancelled(true);
-
-        // Owner should be able to open the shop
-        if (event.getPlayer().getUniqueId().equals(shop.getOwner()) && event.getPlayer().isSneaking() && !manager.isBypassing(event.getPlayer().getUniqueId())) {
-            event.setCancelled(false);
+        if (event.getPlayer().isSneaking()) {
+            locale.sendCustomMessages(event.getPlayer(), "command-stats-list", shop.getPlaceholders());
             return;
         }
 
-        if (shop.getType() == ShopType.BUYING && shop.getSpace() <= 0) {
+        // buying = left click, selling = right click
+        boolean isBuying = event.getAction() == Action.LEFT_CLICK_BLOCK;
+        if (shop.getSellPrice() > 0 && shop.getSpace() <= 0 && !isBuying) {
             this.locale.sendMessage(event.getPlayer(), "command-sell-full", shop.getPlaceholders());
             return;
         }
 
-        if (shop.getType() == ShopType.SELLING && shop.getStock() <= 0) {
+        if (shop.getBuyPrice() > 0 && shop.getStock() <= 0 && isBuying) {
             this.locale.sendMessage(event.getPlayer(), "command-buy-empty", shop.getPlaceholders());
             return;
         }
 
         Player player = event.getPlayer();
 
-        manager.getAwaitingResponse().put(player.getUniqueId(), shop);
+        this.manager.getAwaitingResponse().put(player.getUniqueId(), new ShopResponse(shop, isBuying ? ShopType.BUYING : ShopType.SELLING));
+        this.locale.sendMessage(player, isBuying ? "command-buy-input" : "command-sell-input", shop.getPlaceholders());
+    }
 
-        switch (shop.getType()) {
-            case SELLING -> this.locale.sendMessage(player, "command-buy-input", shop.getPlaceholders());
-            case BUYING -> this.locale.sendMessage(player, "command-sell-input", shop.getPlaceholders());
+    @EventHandler
+    public void onBreak(PlayerInteractEvent event) {
+        Block block = event.getClickedBlock();
+        if (block == null) return;
+        if (!(block.getState() instanceof Container)) return; // don't care if not container, this event is specifically when interacting with shop itself
+
+        Shop shop = this.manager.getShop(block);
+        if (shop == null) return;
+
+        // Update the shop
+        shop.update();
+
+        if (shop.getOwner().equals(event.getPlayer().getUniqueId())) return;
+
+        // Bypassing the protection on the shop
+        if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+            if (this.manager.isBypassing(event.getPlayer().getUniqueId()) && !shop.getOwner().equals(event.getPlayer().getUniqueId())) {
+                locale.sendMessage(event.getPlayer(), "command-bypass-used");
+            }
+
+            return;
         }
+
+        event.setCancelled(true);
+        locale.sendCustomMessages(event.getPlayer(), "command-stats-list", shop.getPlaceholders());
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onChat(AsyncPlayerChatEvent event) {
-        ShopManager manager = this.manager;
-        Shop shop = manager.getAwaitingResponse().getIfPresent(event.getPlayer().getUniqueId());
-        if (shop == null) return;
+        ShopResponse response = this.manager.getAwaitingResponse().getIfPresent(event.getPlayer().getUniqueId());
+        if (response == null) return;
 
         event.setCancelled(true);
 
@@ -156,12 +149,9 @@ public class BlockListeners implements Listener {
 
         // Has to be done synchronously :( Bukkit API moment
         Bukkit.getScheduler().runTask(this.plugin, () -> {
-            if (shop.getType() == ShopType.SELLING) {
-                shop.buy(event.getPlayer(), amount);
-            }
-
-            if (shop.getType() == ShopType.BUYING) {
-                shop.sell(event.getPlayer(), amount);
+            switch (response.type()) {
+                case BUYING -> response.shop().sellToShop(event.getPlayer(), amount); //
+                case SELLING -> response.shop().buyFromShop(event.getPlayer(), amount);
             }
         });
     }
