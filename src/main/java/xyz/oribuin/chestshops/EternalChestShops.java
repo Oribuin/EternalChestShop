@@ -2,6 +2,7 @@ package xyz.oribuin.chestshops;
 
 import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.rosegarden.manager.Manager;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginManager;
 import xyz.oribuin.chestshops.listener.BlockListeners;
 import xyz.oribuin.chestshops.listener.ChunkListeners;
@@ -12,6 +13,7 @@ import xyz.oribuin.chestshops.manager.LocaleManager;
 import xyz.oribuin.chestshops.manager.ShopManager;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class EternalChestShops extends RosePlugin {
 
